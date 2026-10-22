@@ -16,6 +16,11 @@ Space" (Sethurathienam Iyer, ORCID 0009-0008-5446-2856).
 | `test_encoder.adb` | Exhaustive runtime bijection test (Experiment 4) |
 | `gnatprove-transcript.txt` | GNATprove 14.1.1 proof transcript: 47/47 obligations, 0 unproved |
 | `AUDIT.md` | Third-party audit of the released artifacts (see Scope below) |
+| `exp1_caustic.py` | Experiment 1: caustic merging, merged vs lifted residual |
+| `exp2_anisotropy.py` | Experiment 2: anisotropic sampling, the 4:1 derivative ratio |
+| `exp3_dispersion.py` | Experiment 3: phase vs group index, required dispersion contrast |
+| `phase2.py` | Appendices C/D: three-loop fit, orbit counting, fluctuation test, quantum-graph secular equation |
+| `allan.py` | Appendix F: exact Allan distortion, closed form vs direct sum, persistence table |
 | `verified/` | **Parameterized** encoder: injectivity proved for ALL consistent tables, not one instance |
 | `verified/gnatprove-general-transcript.txt` | GNATprove run: 97 obligations, 93 proved, 0 unproved |
 
@@ -41,8 +46,13 @@ Space" (Sethurathienam Iyer, ORCID 0009-0008-5446-2856).
 Reproduce:
 
 ```
-python3 partition.py --seeds 30 --out results_exp5_seeds.csv   # headline 1.746 +- 0.005
-python3 scaling.py    --seeds 12 --out results_exp5_scaling.csv
+python3 partition.py      --seeds 30 --out results_exp5_seeds.csv   # headline 1.746 +- 0.005
+python3 scaling.py        --seeds 12 --out results_exp5_scaling.csv
+python3 exp1_caustic.py        # Experiment 1
+python3 exp2_anisotropy.py     # Experiment 2 (pure calculus, exact)
+python3 exp3_dispersion.py     # Experiment 3
+python3 phase2.py              # Appendices C and D
+python3 allan.py               # Appendix F
 ```
 
 ## What the headline number does and does not depend on

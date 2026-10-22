@@ -309,7 +309,7 @@
                 <p><strong>From naive indexing to phase-space topology.</strong> Row-major arrays assume a Cartesian grid, but the measurement volume is progressively elliptical: the scale factors are \(a(\rho)=1+\alpha\rho^2\) and \(c(\rho)=1-\beta\rho^2\), so the semiaxes are \(\rho a(\rho)\) and \(\rho c(\rho)\). Because \(\mathrm{d}x/\mathrm{d}\rho=1+3\alpha\rho^2\) while \(\mathrm{d}z/\mathrm{d}\rho=1-3\beta\rho^2\), uniform radial steps produce a \(4{:}1\) disparity in physical displacement at the boundary for \(\alpha=\beta=0.2\). Worse, Fermat's principle and the eikonal equation produce caustics where distinct rays share a position, so a spatial array merges different propagation histories. Imposing the dispersion constraint \(\lvert\mathbf{p}\rvert=n_p(\mathbf{x},\omega_0)/c\) places the state on a five-dimensional contact manifold \(\mathcal{M}_{\omega_0}\) parameterised by \((x,y,z,\theta,\phi)\), and the two direction angles are exactly what separates the colliding branches.</p>
               </li>
               <li>
-                <p><strong>Verification, and the two refractive indices.</strong> Local charts with canonical cell ownership give \(E(k,r)=B_k+r\), a contiguous collision-free encoding released as an Ada/SPARK specification: 47 proof obligations discharged, 0 unproved, for that three-chart instance and its contract structure. At \(1\,\mathrm{fs}\approx 300\,\mathrm{nm}\) of light travel, the phase index \(n_p\) generates the rays while the group index \(n_g=n_p+\omega\,\partial_\omega n_p\) governs arrival time along them; conflating the two injects a systematic \(\approx 40\,\mathrm{fs}\) error over a \(1\,\mathrm{m}\) dispersive path.</p>
+                <p><strong>Verification, and the two refractive indices.</strong> Local charts with canonical cell ownership give \(E(k,r)=B_k+r\), a contiguous collision-free encoding released as an Ada/SPARK specification: 47 proof obligations discharged, 0 unproved, for that three-chart instance and its contract structure. At \(1\,\mathrm{fs}\approx 300\,\mathrm{nm}\) of light travel, the phase index \(n_p\) generates the rays while the group index \(n_g=n_p+\omega\,\partial_\omega n_p\) governs arrival time along them; conflating the two injects a systematic \(\approx 40\,\mathrm{fs}\) error over a \(1\,\mathrm{mm}\) dispersive path.</p>
               </li>
               <li>
                 <p><strong>Cells are a budget.</strong> With a finite cell budget \(K_{\max}\) and finite calibration samples \(M\), allocation becomes task-aware quantization:</p>
@@ -317,7 +317,7 @@
                 <p>Five synthetic experiments populate this objective. Merging 20,000 converging rays into a spatial address inflates the timing residual from the \(0.30\,\mathrm{fs}\) detector floor to \(2.87\,\mathrm{fs}\) (\(9.55\times\)), manufacturing a false stochastic signal that a 128-bin lifted representation resolves by \(99.7\%\). Omitting chart identifiers makes 384 of 1,024 ranks collide. Under a \(K=64\) budget, chart-legal dynamic programming beats uniform angular binning by \(1.75\times\), while an unconstrained scalar Lloyd–Max optimum reaches \(10.6\times\) only by fragmenting the angular domain into 91 non-contiguous runs — pricing the address-structure cost of identity instead of asserting it.</p>
               </li>
               <li>
-                <p><strong>What the geometry forbids.</strong> Accumulated delay around a closed ray is a non-trivial dynamical cocycle, \(D(x,T+S)=D(x,T)+D(\phi^{T}x,S)\), and cannot be written as an instantaneous-state coboundary \(u(\phi^{T}x)-u(x)\); history variables such as a lap counter are therefore mandatory rather than an optimisation. Unresolved Markovian branch switching generates a Lorentzian-like spectrum whose Allan variance differs by up to \(93.6\times\) at \(\tau=256\) between independent and near-persistent (\(\rho=0.99\)) branches, and the ranking <em>reverses</em> with averaging window. Preserving \(J\) equiprobable branches costs exactly \(J^2\) in MSE — the per-bit price of identity, \(4\times\) per reserved address bit, exact when \(J\) is a power of two (\(16\times\) rather than \(9\times\) at \(J=3\), because address bits are integral) — while noisy calibration caps useful resolution at \(K_{\mathrm{opt}}\propto M^{1/3}\). Packaging closed-ray delays into an optical Euler product \(Z_{\mathrm{opt}}(s)\) reaches the prime number theorem's orbit proliferation (\(h\approx1\)) yet shows zero correlation (\(-0.023\)) with prime-counting fluctuations, separating exponential orbit growth from Riemann-zero arithmetic structure.</p>
+                <p><strong>What the geometry forbids.</strong> Accumulated delay around a closed ray is a non-trivial dynamical cocycle, \(D(x,T+S)=D(x,T)+D(\phi^{T}x,S)\), and cannot be written as an instantaneous-state coboundary \(u(\phi^{T}x)-u(x)\); history variables such as a lap counter are therefore mandatory rather than an optimisation. Unresolved Markovian branch switching generates a Lorentzian-like spectrum whose Allan variance differs by \(94.6\times\) at \(\tau=256\) between independent and near-persistent (\(\rho=0.99\)) branches, and the ranking <em>reverses</em> with averaging window. Preserving \(J\) equiprobable branches costs exactly \(J^2\) in MSE — the per-bit price of identity, \(4\times\) per reserved address bit, exact when \(J\) is a power of two (\(16\times\) rather than \(9\times\) at \(J=3\), because address bits are integral) — while noisy calibration caps useful resolution at \(K_{\mathrm{opt}}\propto M^{1/3}\). Packaging closed-ray delays into an optical Euler product \(Z_{\mathrm{opt}}(s)\) reaches the prime number theorem's orbit proliferation (\(h\approx1\)) yet shows essentially zero correlation (\(-0.04\) on first differences) with prime-counting fluctuations, separating exponential orbit growth from Riemann-zero arithmetic structure.</p>
               </li>
             </ol>
 
@@ -947,12 +947,12 @@
             <div class="stat"><span class="stat-label">std of branch delays</span><strong>2.85 fs</strong><span class="stat-note">direction-dependent \(T_g(U)\)</span></div>
             <div class="stat"><span class="stat-label">detector noise σ</span><strong>0.30 fs</strong><span class="stat-note">ideal floor</span></div>
             <div class="stat"><span class="stat-label">merged residual</span><strong>2.87 fs · 8.21 fs²</strong><span class="stat-note">std · variance</span></div>
-            <div class="stat"><span class="stat-label">binned lifted residual</span><strong>0.34 fs · 0.117 fs²</strong><span class="stat-note">K = 128 bins</span></div>
+            <div class="stat"><span class="stat-label">binned lifted residual</span><strong>0.31 fs · 0.093 fs²</strong><span class="stat-note">K = 128 bins</span></div>
             <div class="stat"><span class="stat-label">merged ÷ noise floor</span><strong>9.55× std · 91× var</strong><span class="stat-note">versus ideal σ</span></div>
             <div class="stat"><span class="stat-label">merged ÷ practical floor</span><strong>8.34× std · 69.6× var</strong><span class="stat-note">versus binned lifted</span></div>
           </div>
 
-          <p>The difference between those ratios matters: the first compares to the ideal floor \(\sigma = 0.30\,\mathrm{fs}\); the second compares to the practical floor \(\sqrt{\sigma^2 + \operatorname{Var}(T_g \mid B)} \approx 0.34\,\mathrm{fs}\). The binned lifted residual is not \(\sigma\); it is \(\sigma\) plus within-bin geometry \(\operatorname{Var}(T_g \mid B)\). Thus the binned representation resolves \(1 - 0.027/8.12 = 99.7\%\) of the geometric-delay variance in that sample, leaving \(\operatorname{Var}(T_g \mid B) = 0.027\,\mathrm{fs}^2\) unresolved — approximately \(0.3\%\).</p>
+          <p>The difference between those ratios matters: the first compares to the ideal floor \(\sigma = 0.30\,\mathrm{fs}\); the second compares to the practical floor \(\sqrt{\sigma^2 + \operatorname{Var}(T_g \mid B)} \approx 0.31\,\mathrm{fs}\). The binned lifted residual is not \(\sigma\); it is \(\sigma\) plus within-bin geometry \(\operatorname{Var}(T_g \mid B)\). Thus the binned representation resolves \(1 - 0.0016/8.09 = 99.98\%\) of the geometric-delay variance in that sample, leaving \(\operatorname{Var}(T_g \mid B) = 0.0016\,\mathrm{fs}^2\) unresolved — approximately \(0.02\%\).</p>
 
           <p>The experiment demonstrates a specific failure mode: spatial merging can turn deterministic, branch-dependent propagation delays into apparent stochastic timing fluctuations. It does not demonstrate a new clock; it demonstrates how a false clock-like signal can arise.</p>
 
@@ -977,7 +977,7 @@
                 <path class="fig-lifted" d="M216 250 C 220 150, 214 60, 216 44 C 218 60, 220 150, 216 250 Z" fill="none" />
                 <g class="fig-legend">
                   <line x1="88" y1="52" x2="118" y2="52" class="fig-merged" />
-                  <text x="126" y="57">merged — std 2.87 fs, skew 0.42</text>
+                  <text x="126" y="57">merged — std 2.86 fs, skew 0.01</text>
                   <line x1="88" y1="76" x2="118" y2="76" class="fig-lifted" />
                   <text x="126" y="81">corrected — std 0.34 fs, skew 0.05</text>
                 </g>
@@ -1115,7 +1115,7 @@
 
           <h3 id="s13-calib">Calibration allocation at large and small M</h3>
 
-          <p>Using the uniform-\(T_g\) bins, with \(p_k\) and \(v_k\) estimated from training data and the continuous relaxation of Proposition 4: the optimal allocation offers negligible improvement when calibration is abundant but becomes consequential when samples are scarce, because the calibration term \(p_k v_k / m_k\) grows as \(1/m_k\) while the within-cell term stays fixed. At \(M = 10^6\), optimal \(\{m_k\}\) is nearly uniform; at \(M = 256\), optimal allocations deviate strongly from uniformity — the continuous relaxation breaks down and integer allocation is required. Finite-calibration simulation for the binned lifted estimator with floor variance \(0.117\,\mathrm{fs}^2\) (calibration-term inflation \(v_k/m_k\), \(v_k \approx 0.117\)): \(m = 1\) gives \(+100\%\) (variance \(0.234\,\mathrm{fs}^2\)), \(m = 2\) gives \(+50\%\), \(m = 4\) gives \(+25\%\), and \(m = 16\) gives \(+6.25\%\). A cell cheap in silicon may be expensive to calibrate.</p>
+          <p>Using the uniform-\(T_g\) bins, with \(p_k\) and \(v_k\) estimated from training data and the continuous relaxation of Proposition 4: the optimal allocation offers negligible improvement when calibration is abundant but becomes consequential when samples are scarce, because the calibration term \(p_k v_k / m_k\) grows as \(1/m_k\) while the within-cell term stays fixed. At \(M = 10^6\), optimal \(\{m_k\}\) is nearly uniform; at \(M = 256\), optimal allocations deviate strongly from uniformity — the continuous relaxation breaks down and integer allocation is required. Finite-calibration simulation for the binned lifted estimator with floor variance \(0.093\,\mathrm{fs}^2\) (calibration-term inflation \(v_k/m_k\), \(v_k \approx 0.093\)): \(m = 1\) gives \(+100\%\) (variance \(0.234\,\mathrm{fs}^2\)), \(m = 2\) gives \(+50\%\), \(m = 4\) gives \(+25\%\), and \(m = 16\) gives \(+6.25\%\). A cell cheap in silicon may be expensive to calibrate.</p>
 
           <!-- §14 -->
           <h2 id="s14">14. The final surprise: the memory problem was never just about memory</h2>
@@ -1389,7 +1389,7 @@
 
           <p>with clean limits: \(\Phi \to \tau\) as \(\rho \to 0\) (independent branches — pure white residual, \(\sigma_y^2 = (a^2+\sigma^2)/\tau\)), and \(\Phi \to 0\) as \(\rho \to 1\) (a frozen branch is a DC offset, invisible to the second difference). The instability lives <em>between</em> the limits. <span class="ev-badge ev-badge--a">A</span></p>
 
-          <p>A two-million-sample simulation agrees with the closed form to within 3% at every tested averaging time from \(\tau = 1\) to \(\tau = 1024\). <span class="ev-badge ev-badge--b">B</span> The consequence is brutal: with <strong>identical MSE</strong>, a near-persistent branch chain (\(\rho = 0.99\)) and independent branches (\(\rho = 0\)) differ by <strong>93.6×</strong> in Allan variance at \(\tau = 256\) — and the ranking <em>reverses</em> with the averaging window: at \(\tau = 8\) the persistent chain looks 0.2× <em>better</em> than a \(\rho = 0.5\) chain; at \(\tau = 256\) it is 31.7× worse. A cell that is benign at one averaging time is catastrophic at another.</p>
+          <p>A two-million-sample simulation agrees with the closed form to within 3% at every tested averaging time from \(\tau = 1\) to \(\tau = 1024\). <span class="ev-badge ev-badge--b">B</span> The consequence is brutal: with <strong>identical MSE</strong>, a near-persistent branch chain (\(\rho = 0.99\)) and independent branches (\(\rho = 0\)) differ by <strong>94.6×</strong> in Allan variance at \(\tau = 256\) — and the ranking <em>reverses</em> with the averaging window: at \(\tau = 8\) the persistent chain looks 0.2× <em>better</em> than a \(\rho = 0.5\) chain; at \(\tau = 256\) it is 31.7× worse. A cell that is benign at one averaging time is catastrophic at another.</p>
 
           <div class="lab-card stab-lab" id="stability-lab">
             <div class="lab-card-heading"><span>Allan variance of the two-branch residual — σ²ₚ(τ) on log–log</span><span class="experiment-tag">§17 · Extension 2</span></div>
@@ -1698,14 +1698,13 @@ Total                            47    3 (6%)     44 (94%)           .          
             <caption>Correlation between prime-counting and orbit-counting residuals</caption>
             <thead><tr><th scope="col">comparison</th><th scope="col">correlation</th></tr></thead>
             <tbody>
-              <tr><td>raw counting residuals</td><td class="num">0.24</td></tr>
-              <tr><td>normalized residuals</td><td class="num">0.23</td></tr>
-              <tr><td>first-differenced residuals</td><td class="num is-headline">−0.023</td></tr>
-              <tr><td>log-power spectral profiles</td><td class="num">0.15</td></tr>
-            </tbody>
+              <tr><td>raw counting residuals</td><td class="num">+0.13</td></tr>
+              <tr><td>normalized residuals</td><td class="num">+0.12</td></tr>
+              <tr><td>first-differenced residuals</td><td class="num is-headline">−0.04</td></tr>
+              </tbody>
           </table>
 
-          <p>The first-difference correlation is the decisive one, and it is zero. The graph reproduces the coarse growth and none of the arithmetic fluctuation. <span class="ev-badge ev-badge--b">B</span></p>
+          <p>The first-difference correlation is the decisive one, and it is zero. (We no longer report a log-power spectral correlation: binned log spectra of two smooth residuals correlate almost arbitrarily depending on the binning, so it is not a well-defined statistic.) The graph reproduces the coarse growth and none of the arithmetic fluctuation. <span class="ev-badge ev-badge--b">B</span></p>
 
           <blockquote class="theorem-block">
             <p><strong>The separation this establishes.</strong> Exponential orbit proliferation \(\neq\) Riemann-zero arithmetic structure. Topological entropy controls the leading proliferation of periodic orbits; it does not produce the delicate correlations encoded by the nontrivial zeros. RH is not a statement that primes grow at roughly the right rate — it is a statement about where the zeros sit, with consequences for the error term in prime counting.</p>
