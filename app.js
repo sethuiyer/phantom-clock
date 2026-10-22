@@ -37,6 +37,7 @@ let minutesEstimate = 30;
       dark ? "#2d2a2e" : "#f5f6f7",
     );
     drawLab();
+    drawStab();
   }
 
   $(".theme-toggle").addEventListener("click", () => {
@@ -124,6 +125,130 @@ let minutesEstimate = 30;
   }
 
   rhoSlider.addEventListener("input", drawLab);
+
+  /* ------------------------------------------------- stability lab (§17) */
+
+  const stabSvg = $("#stab-canvas");
+  const rhoSliderStab = $("#rho-slider-stab");
+
+  // Allan variance of the two-branch residual: sigma_y^2(tau) for
+  // R_t = a Z_t + eps_t with Markov persistence rho, detector noise sigma.
+  function stabCurve(rho, taus) {
+    const a = 1;
+    const sigma = 0.1;
+    return taus.map((tau) => {
+      let sum = 0;
+      for (let h = 1; h < tau; h++) sum += (tau - h) * Math.pow(rho, h);
+      const cov =
+        tau === 1
+          ? rho
+          : (rho * Math.pow(1 - Math.pow(rho, tau), 2)) /
+            Math.pow(1 - rho, 2);
+      const phi = tau + 2 * sum - cov;
+      return (sigma * sigma) / tau + (a * a * phi) / (tau * tau);
+    });
+  }
+
+  const STAB_TAUS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
+
+  function drawStab() {
+    if (!stabSvg) return;
+    const rho = parseFloat(rhoSliderStab.value) || 0;
+    const css = getComputedStyle(root);
+    const c = (name) => css.getPropertyValue(name).trim();
+    const line = c("--line");
+    const lineStrong = c("--line-strong");
+    const ink = c("--ink");
+    const muted = c("--muted");
+    const accent = c("--accent");
+    const accentBright = c("--accent-bright");
+
+    const chosen = stabCurve(rho, STAB_TAUS);
+    const iid = stabCurve(0, STAB_TAUS);
+    const half = stabCurve(0.5, STAB_TAUS);
+
+    const X0 = 62;
+    const X1 = 596;
+    const Y0 = 44;
+    const Y1 = 314;
+
+    const xOf = (tau) =>
+      X0 + (Math.log10(tau) / 3) * (X1 - X0);
+    const logs = [...chosen, ...iid, ...half].map((v) => Math.log10(v));
+    const yMin = Math.floor(Math.min(...logs)) - 0.4;
+    const yMax = Math.ceil(Math.max(...logs)) + 0.4;
+    const yOf = (v) =>
+      Y1 - ((Math.log10(v) - yMin) / (yMax - yMin)) * (Y1 - Y0);
+
+    const grid = [];
+    for (let k = 0; k <= 3; k++) {
+      const x = xOf(Math.pow(10, k));
+      grid.push(`<line x1="${x}" y1="${Y0}" x2="${x}" y2="${Y1}" stroke="${line}" stroke-width="1"/>`);
+    }
+    for (let p = yMin; p <= yMax; p++) {
+      const y = yOf(Math.pow(10, p));
+      grid.push(`<line x1="${X0}" y1="${y}" x2="${X1}" y2="${y}" stroke="${line}" stroke-width="1"/>`);
+      grid.push(`<text class="lab-text" x="${X0 - 8}" y="${y + 4}" text-anchor="end">${fmtPower(p)}</text>`);
+    }
+    [1, 10, 100, 1000].forEach((t) => {
+      grid.push(`<text class="lab-text" x="${xOf(t)}" y="${Y1 + 20}" text-anchor="middle">${t}</text>`);
+    });
+
+    const path = (curve, dash) => {
+      const d = curve
+        .map((v, i) => `${i ? "L" : "M"}${xOf(STAB_TAUS[i]).toFixed(1)} ${yOf(v).toFixed(1)}`)
+        .join("");
+      return `<path class="lab-curve${dash ? " lab-curve--dash" : ""}" d="${d}"/>`;
+    };
+
+    const x256 = xOf(256);
+    const marker =
+      `<line x1="${x256}" y1="${Y0}" x2="${x256}" y2="${Y1}" stroke="${lineStrong}" stroke-width="1" stroke-dasharray="2 4"/>` +
+      `<circle class="lab-pt" cx="${x256}" cy="${yOf(chosen[8])}" r="4"/>` +
+      `<circle class="lab-pt" cx="${x256}" cy="${yOf(iid[8])}" r="4"/>` +
+      `<text class="lab-text lab-text--accent" x="${x256 + 6}" y="${Y0 + 16}">τ = 256</text>`;
+
+    stabSvg.innerHTML = `
+      <g>${grid.join("")}</g>
+      <line class="lab-axis" x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}"/>
+      <line class="lab-axis" x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1}"/>
+      ${path(iid, true)}
+      ${path(half, true)}
+      ${path(chosen, false)}
+      ${marker}
+      <text class="lab-text" x="${X1 - 2}" y="${Y1 - 8}" text-anchor="end">ρ = 0 (independent)</text>
+      <text class="lab-text" x="${X1 - 2}" y="${Y1 - 24}" text-anchor="end">ρ = 0.5</text>
+      <text class="lab-text lab-text--accent" x="${X1 - 2}" y="${Y1 + 34}" text-anchor="end">ρ = ${rho.toFixed(3)}</text>
+      <text class="lab-text" x="${X0 + 10}" y="${Y0 - 14}">σ²_y(τ) — Allan variance of time residuals</text>`;
+
+    $("#rho-val-stab").textContent = rho.toFixed(3);
+    const r256 = chosen[8] / iid[8];
+    const r05 = chosen[8] / half[8];
+    $("#stab-ratio-256").textContent =
+      r256 >= 10 ? `${r256.toFixed(1)}×` : `${r256.toFixed(2)}×`;
+    $("#stab-ratio-05").textContent =
+      r05 >= 10 ? `${r05.toFixed(1)}×` : `${r05.toFixed(2)}×`;
+
+    let cross = null;
+    for (let i = 1; i < STAB_TAUS.length; i++) {
+      const d0 = Math.log10(chosen[i - 1]) - Math.log10(half[i - 1]);
+      const d1 = Math.log10(chosen[i]) - Math.log10(half[i]);
+      if (d0 * d1 < 0) {
+        const t = Math.log10(STAB_TAUS[i - 1]) + (Math.log10(STAB_TAUS[i]) - Math.log10(STAB_TAUS[i - 1])) * (d0 / (d0 - d1));
+        cross = Math.round(Math.pow(10, t));
+        break;
+      }
+    }
+    $("#stab-cross").textContent = cross ? `τ ≈ ${cross}` : "no crossing ≤ 1024";
+    rhoSliderStab.setAttribute("aria-valuetext", rho.toFixed(3));
+  }
+
+  function fmtPower(p) {
+    if (p === 0) return "1";
+    return `10${p < 0 ? "⁻" + Math.abs(p) : p}`.replace(/-/g, "⁻");
+  }
+
+  rhoSliderStab?.addEventListener("input", drawStab);
 
   /* ------------------------------------------------------------- progress */
 
@@ -373,6 +498,7 @@ let minutesEstimate = 30;
 
   applyTextSize();
   drawLab();
+  drawStab();
   buildIndex();
   updateProgress();
 })();

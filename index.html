@@ -80,7 +80,7 @@
     <aside class="chapter-sidebar" aria-label="Contents">
       <header class="rail-head">
         <span class="rail-kicker"><span class="rail-mark" aria-hidden="true"></span>Contents</span>
-        <span class="rail-count"><span id="chapter-count">16</span><span class="rail-count-label">sections</span></span>
+        <span class="rail-count"><span id="chapter-count">17</span><span class="rail-count-label">sections</span></span>
       </header>
       <div class="rail-ruler" aria-hidden="true"></div>
       <nav id="chapter-list" aria-label="Table of contents">
@@ -100,6 +100,7 @@
         <a href="#s14" class="chapter-link"><span class="chapter-number">14</span><span class="chapter-title">The final surprise</span></a>
         <a href="#s15" class="chapter-link"><span class="chapter-number">15</span><span class="chapter-title">Five theoretical extensions</span></a>
         <a href="#s16" class="chapter-link"><span class="chapter-number">16</span><span class="chapter-title">Epilogue: Thursday afternoon</span></a>
+        <a href="#s17" class="chapter-link"><span class="chapter-number">17</span><span class="chapter-title">Coda: six threads, one problem</span></a>
         <a href="#appendix-a" class="chapter-link chapter-link--appendix"><span class="chapter-number">A</span><span class="chapter-title">Released encoder &amp; GNATprove transcript</span></a>
         <a href="#appendix-b" class="chapter-link chapter-link--appendix"><span class="chapter-number">B</span><span class="chapter-title">Contact geometry</span></a>
         <a href="#references" class="chapter-link chapter-link--appendix"><span class="chapter-number">Bib</span><span class="chapter-title">Bibliography</span></a>
@@ -136,9 +137,11 @@
             <p class="opening-description">
               A mathematical adventure through geometric optics, caustics, phase-space
               geometry, formally verified memory, and an unreasonable four-day deadline.
-              The surprising claim: the correct memory addresses may need to follow the
-              geometry of <em>light propagation</em>, not the coordinates occupied by matter —
-              and a wrong memory layout can invent a clock that was never there.
+              It starts as a five-dimensional array-addressing problem and arrives at a
+              theory of how a computational representation can manufacture apparent
+              physical instability: a scientific instrument can <em>lie to you</em>
+              because of how you store its measurements. Memory layout becomes part of
+              the measurement physics.
             </p>
             <div class="opening-links">
               <a class="opening-link opening-link--primary" href="#s1">Start reading <span class="opening-link-arrow" aria-hidden="true">↓</span></a>
@@ -197,7 +200,7 @@
         <div class="idea-label"><span>Central claim</span><span class="idea-arrow" aria-hidden="true">↘</span></div>
         <div class="idea-content">
           <p>The optimal representation is <em>not</em> the one that stores the fewest coordinates or minimizes a single timing error. It is the least expensive representation that <em>preserves every distinction the instrument may need to make.</em></p>
-          <span>Compactness is a storage property. Locality is a geometric property. They are not interchangeable.</span>
+          <span>Compactness is a storage property. Locality is a geometric property. Stability is a temporal property. They are not interchangeable.</span>
         </div>
       </section>
 
@@ -250,7 +253,7 @@
         <div class="reading-topline">
           <div class="reading-identity">
             <span class="reading-kicker">Essay</span>
-            <span class="reading-identity-meta">16 sections · 6 theorems · 5 experiments</span>
+            <span class="reading-identity-meta">17 sections · 6 theorems · 5 experiments</span>
           </div>
           <div class="reading-tools">
             <span class="reading-tools-label" aria-hidden="true">Type</span>
@@ -1251,6 +1254,90 @@
           <p>But now the intern also has a better answer than he had on Monday. <em>The optimal representation is not the one that stores the fewest coordinates or minimizes a single timing error. It is the least expensive representation that preserves every distinction the instrument may need to make.</em></p>
 
           <p>That is the paper. The intern started with an array and ended up with a constrained information-theoretic instrument-design problem.</p>
+
+          <!-- §17 -->
+          <h2 id="s17" class="extensions-heading">17. Coda: six threads, one problem</h2>
+
+          <p>Six threads were running in parallel: the caustic experiment, the branch-identity cost, the closed-ray obstruction, the calibration law, the hidden-branch spectrum, and the Allan-variance model. On the last page they turn out to be one problem.</p>
+
+          <p>The problem in one sentence: <strong>a scientific instrument can lie to you because of how you store its measurements.</strong> An optimization procedure that looks entirely successful under a conventional error metric can select a representation that is dramatically worse for the actual scientific measurement — because the metric never asked what the representation must <em>preserve</em>.</p>
+
+          <div class="thread-chain" aria-label="Optical state leads to preserved identity, residual dynamics, and clock stability">
+            <span class="thread-chip">Optical state</span>
+            <span class="thread-arrow" aria-hidden="true">→</span>
+            <span class="thread-chip">Preserved identity</span>
+            <span class="thread-arrow" aria-hidden="true">→</span>
+            <span class="thread-chip">Residual dynamics</span>
+            <span class="thread-arrow" aria-hidden="true">→</span>
+            <span class="thread-chip thread-chip--accent">Clock stability</span>
+          </div>
+
+          <p>A memory representation does not merely store an instantaneous state. It decides which <em>histories</em> remain distinguishable. Those distinctions determine the residual after correction — and the residual’s temporal structure, not its variance alone, is what a clock feels.</p>
+
+          <p>This is the transition that changes what an optimal partition means. The distortion objective of §12 is a function of the distribution of optical states and their delays. A stability objective depends on how hidden branch identities <em>evolve over time</em>. Two partitions with identical one-sample distortion can therefore differ by orders of magnitude in measured instability at the averaging times the instrument actually uses.</p>
+
+          <h3 id="s17-stability">The two-branch model, carried one step further</h3>
+
+          <p>Theorem 3 gave the spectrum of the two-branch residual \(R_t = aZ_t + \varepsilon_t\). What it implies for Allan variance is closed-form. For averaging time \(\tau\) (in samples), the expected Allan variance of the time residuals is</p>
+
+          \[
+          \sigma_y^2(\tau) = \frac{\sigma^2}{\tau} + \frac{a^2\,\Phi(\rho,\tau)}{\tau^2},
+          \qquad
+          \Phi(\rho,\tau) = \tau + 2\sum_{h=1}^{\tau-1}(\tau-h)\rho^{h} - \rho\,\frac{(1-\rho^\tau)^2}{(1-\rho)^2}.
+          \]
+
+          <p>with clean limits: \(\Phi \to \tau\) as \(\rho \to 0\) (independent branches — pure white residual, \(\sigma_y^2 = (a^2+\sigma^2)/\tau\)), and \(\Phi \to 0\) as \(\rho \to 1\) (a frozen branch is a DC offset, invisible to the second difference). The instability lives <em>between</em> the limits. <span class="ev-badge ev-badge--a">A</span></p>
+
+          <p>A two-million-sample simulation agrees with the closed form to within 3% at every tested averaging time from \(\tau = 1\) to \(\tau = 1024\). <span class="ev-badge ev-badge--b">B</span> The consequence is brutal: with <strong>identical MSE</strong>, a near-persistent branch chain (\(\rho = 0.99\)) and independent branches (\(\rho = 0\)) differ by <strong>93.6×</strong> in Allan variance at \(\tau = 256\) — and the ranking <em>reverses</em> with the averaging window: at \(\tau = 8\) the persistent chain looks 0.2× <em>better</em> than a \(\rho = 0.5\) chain; at \(\tau = 256\) it is 31.7× worse. A cell that is benign at one averaging time is catastrophic at another.</p>
+
+          <div class="lab-card stab-lab" id="stability-lab">
+            <div class="lab-card-heading"><span>Allan variance of the two-branch residual — σ²ₚ(τ) on log–log</span><span class="experiment-tag">§17 · Extension 2</span></div>
+            <div class="lab-stage">
+              <svg id="stab-canvas" viewBox="0 0 640 360" role="img" aria-label="Interactive log-log plot of Allan variance versus averaging time for the two-branch model"></svg>
+            </div>
+            <div class="lab-controls">
+              <div class="lab-slider-row">
+                <label for="rho-slider-stab">ρ — branch persistence</label>
+                <input type="range" id="rho-slider-stab" min="0" max="0.999" step="0.001" value="0.99" aria-valuetext="0.99" />
+                <output id="rho-val-stab" for="rho-slider-stab">0.99</output>
+              </div>
+              <div class="lab-readouts">
+                <div class="lab-readout"><span class="lab-readout-label">vs independent branches at τ = 256</span><strong id="stab-ratio-256">—</strong></div>
+                <div class="lab-readout"><span class="lab-readout-label">vs ρ = 0.5 at τ = 256</span><strong id="stab-ratio-05">—</strong></div>
+                <div class="lab-readout"><span class="lab-readout-label">crosses ρ = 0.5 at</span><strong id="stab-cross">—</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <p>The partition optimizer therefore needs <em>temporal transition statistics</em> — not independent samples of \((Q,T_g)\). The pair \((a^2,\rho)\) is the compact expression of that requirement in the two-branch model; the refinement rule of §7 must target the pair, not the variance. An optical memory representation must preserve not only distinctions that affect instantaneous timing error, but also distinctions whose temporal persistence affects measured clock stability.</p>
+
+          <h3 id="s17-objective">The stability-aware objective</h3>
+
+          \[
+          \boxed{\begin{aligned}
+          \min_{\mathcal{P},\{m_k\}} \quad
+          &amp; \mathbb{E}\!\left[(T_g - \widehat{T}_g)^2\right] \\
+          \text{subject to} \quad
+          &amp; |\mathcal{P}| \le K_{\max}, \quad \textstyle\sum_{k=1}^{K} m_k \le M, \\
+          &amp; \mathcal{P} \text{ preserves chart ownership and required branch identity,} \\
+          &amp; \sigma_y^2(\tau) \le b(\tau) \qquad \text{for } \tau \in \mathcal{T},
+          \end{aligned}}
+          \]
+
+          <p>where \(\mathcal{T}\) is the instrument’s averaging window and \(b(\tau)\) its stability budget. Every ingredient already exists in this essay: Theorem 3 supplies the spectrum, Theorem 5 the calibration cost, and the two-branch model above the computable constraint. The winding-invariant of §15 supplies the same lesson from the other side — preserving instantaneous direction may not preserve accumulated path history, and the integer counters price exactly that history.</p>
+
+          <p class="pull">The correct representation of a physical measurement is determined by what distinctions the instrument must <em>preserve</em> — including distinctions that affect future temporal behavior — not just instantaneous reconstruction error.</p>
+
+          <div class="theorem" id="exp6">
+            <div class="theorem-head"><span class="theorem-tag">The decisive experiment</span><span class="theorem-title">Averaging-time-dependent reversal</span></div>
+            <div class="theorem-body">
+              <p>Hold instantaneous MSE fixed across two merged-cell corrections. Vary hidden-branch persistence \(\rho\). Demonstrate that the relative metrological performance of the two representations <em>reverses</em> as the averaging time \(\tau\) passes through a crossover. That is a much more informative result than increasing the \(1.75\times\) improvement — it shows the partition optimizer must be told the instrument’s averaging window, and it turns the six threads into one falsifiable statement.</p>
+            </div>
+          </div>
+
+          <p>The paper-level statement is now the unification of the caustic experiment, the branch-identity cost, the closed-ray obstruction, the calibration law, and the Allan-variance model. The intern’s Monday problem — where should the measurements live? — has become: <em>which histories must remain distinguishable for the clock to be read honestly?</em></p>
+
+          <p class="pull">Memory layout is not a storage decision. It is part of the measurement physics.</p>
 
           <!-- Appendix A -->
           <h2 id="appendix-a" class="appendix-heading">Appendix A — The released encoder and its GNATprove transcript</h2>

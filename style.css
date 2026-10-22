@@ -1055,59 +1055,66 @@ main {
   padding: 18px 20px 6px;
 }
 
-#lab-canvas {
+.lab-stage svg {
   width: 100%;
   height: auto;
 }
 
-#lab-canvas .lab-grid line {
-  stroke: var(--line);
-  stroke-width: 1;
-}
-
-#lab-canvas .lab-axis {
+.lab-stage .lab-axis {
   stroke: var(--line-strong);
   stroke-width: 1.2;
 }
 
-#lab-canvas .lab-shell {
+.lab-stage .lab-shell {
   fill: none;
   stroke: var(--line-strong);
   stroke-width: 1;
 }
 
-#lab-canvas .lab-shell--active {
+.lab-stage .lab-shell--active {
   stroke: var(--ink);
   stroke-width: 1.8;
 }
 
-#lab-canvas .lab-arrow {
+.lab-stage .lab-arrow {
   stroke: var(--accent);
   stroke-width: 2.2;
   stroke-linecap: round;
 }
 
-#lab-canvas .lab-arrow-head {
+.lab-stage .lab-arrow-head {
   fill: var(--accent);
 }
 
-#lab-canvas .lab-pt {
+.lab-stage .lab-pt {
   fill: var(--accent-bright);
 }
 
-#lab-canvas .lab-text {
+.lab-stage .lab-text {
   fill: var(--muted);
   font-family: var(--mono);
   font-size: 12px;
   letter-spacing: 0.02em;
 }
 
-#lab-canvas .lab-text--strong {
+.lab-stage .lab-text--strong {
   fill: var(--ink);
 }
 
-#lab-canvas .lab-text--accent {
+.lab-stage .lab-text--accent {
   fill: var(--accent);
+}
+
+.lab-curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+
+.lab-curve--dash {
+  stroke: var(--line-strong);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 4;
 }
 
 .lab-controls {
@@ -1952,6 +1959,46 @@ input[type="range"]::-moz-range-thumb {
 
 .extensions-heading {
   border-top-color: var(--accent) !important;
+}
+
+/* Thread chain (§17) -------------------------------------------------------------- */
+
+.thread-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 1.8em 0;
+}
+
+.thread-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 15px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.thread-chip--accent {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.thread-arrow {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.stab-lab {
+  margin: 1.8em 0;
 }
 
 /* References ---------------------------------------------------------------------- */
