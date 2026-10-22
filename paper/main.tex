@@ -1637,70 +1637,78 @@ geometrically natural, even though contact geometry alone does not prescribe a u
 optimal memory layout.
 
 
-\section{Phase 2: closed rays, a dynamical zeta, and an obstruction}\label{app:phase2}
+\section{Phase 2: closed rays, a dynamical zeta, quantum graphs, and an obstruction}\label{app:phase2}
 
 Appendix~\ref{app:contact} put a contact form $\alpha = \pv\cdot d\xv$ on the
 five-dimensional fixed-frequency manifold, with the Reeb flow recovering the optical
 characteristic flow up to reparameterization. Section~\ref{sec:extensions} proved the
-closed-ray obstruction (Theorem~\ref{thm:closedray}). This appendix takes the obvious
-next step and asks what the \emph{global} closed-ray structure is, in the standard
-dynamical-systems sense. It is explicitly speculative: nothing here is required for the
-four-day prototype, and the section's purpose is to mark the boundary between what the
-geometry already gives and what it does not.
+closed-ray obstruction. This appendix follows the global closed-ray structure in the
+standard dynamical-systems sense. Nothing here is required for the four-day prototype.
+The aim is to mark precisely what the geometry already gives, what a small model can
+demonstrate numerically, and what fails.
 
-\paragraph{Periods as invariants.} Let $\mathcal{P}$ be the set of primitive closed
-Reeb orbits, i.e.\ closed optical rays traversed once. Along $\gamma \in \mathcal{P}$
-the Reeb condition $\alpha(R_\alpha) = 1$ identifies Reeb time with the contact action,
+\subsection{Periods are orbit invariants}
+
+Let $\mathcal{P}$ be the set of primitive closed Reeb orbits: closed optical rays
+traversed once. Along $\gamma\in\mathcal{P}$ the Reeb condition $\alpha(R_\alpha)=1$
+identifies Reeb time with the contact action,
 \begin{equation}
 T^{(p)}_\gamma = \oint_\gamma \alpha
 = \oint_\gamma \frac{n_p(\xv,\omega_0)}{c}\,d\ell ,
 \end{equation}
-which is the phase travel time, and the group-delay observable supplies a second
-invariant on the same orbits,
+and the group-delay observable supplies a second invariant on the same orbits,
 $G_\gamma = \oint_\gamma (n_g/c)\,d\ell$. These are not independent data. With the
 positive dispersion ratio $r = n_g/n_p$,
 \begin{equation}
 G_\gamma = \int_0^{T^{(p)}_\gamma} r\!\left(\phi^t q\right) dt ,
 \end{equation}
-so group delay is a \emph{positive time change} of the phase period: the group-delay
-spectrum is the phase spectrum pushed through $r$, not a fresh object
-[evidence type A].
+so group delay is a positive time change of the phase period: the group-delay spectrum
+is the phase spectrum pushed through $r$, not a fresh object. Consequently a
+recirculating instrument carries two spectra of orbit invariants, $\{T^{(p)}_\gamma\}$
+and $\{G_\gamma\}$, and the address map of \S\ref{sec:addressing} records neither at
+zero cost.
 
-Theorem~\ref{thm:closedray} then reads as a statement about repetition. After $m$
-circuits, $q_m = q_0$ while $T_g(m) - T_g(0) = m\,G_\gamma$. The instantaneous
-five-dimensional state cannot distinguish $m=1$ from $m=2$, because both are the same
-point; the missing history variable \emph{is} the repetition index of a periodic orbit.
-That is precisely the primitive-orbit/repetition decomposition that dynamical zeta
-functions exist to encode.
+The closed-ray obstruction now reads as a statement about repetition. After $m$
+circuits, $q_m=q_0$ while $T_g(m)-T_g(0)=m\,G_\gamma$; the instantaneous five-
+dimensional state cannot distinguish $m=1$ from $m=2$, and the missing history variable
+\emph{is} the repetition index of a periodic orbit. Appendix~\ref{app:cocycle} gives
+the cohomological form of that statement.
 
-\paragraph{A dynamical zeta function.} For a reference time $T_*$, define
+\subsection{A dynamical zeta function}
+
+For a reference time $T_*$ define
 \begin{equation}
 \zeta_{\mathrm{opt}}(s) = \prod_{\gamma\in\mathcal{P}}
 \left(1 - e^{-sG_\gamma/T_*}\right)^{-1},
-\qquad
--\frac{\zeta_{\mathrm{opt}}'(s)}{\zeta_{\mathrm{opt}}(s)}
-= \sum_{\gamma\in\mathcal{P}}\sum_{m\ge1}\frac{\log N_\gamma}{N_\gamma^{ms}},
 \end{equation}
-with orbit norm $N_\gamma = \exp(G_\gamma/T_*)$. The Euler product, the repetition
-index $m$, and the log-weights therefore assemble themselves exactly as in the Riemann
-Euler product. This is why trace formulas resemble the explicit formula, and it is also
-why the resemblance is not by itself evidence of anything: every zeta function has an
-Euler product over primitive objects with a repetition index. The periodic-orbit measure
-$\Theta_{\mathrm{opt}}(t) = \sum_{\gamma}\sum_{m\ge1}G_\gamma\,\delta(t-mG_\gamma)$ has
-Laplace transform $-\zeta_{\mathrm{opt}}'/\zeta_{\mathrm{opt}}$, so the zeta is a
-packaging of closed-ray delays rather than an extra assumption.
+with orbit norm $N_\gamma=\exp(G_\gamma/T_*)$ and logarithmic derivative
+$-\zeta_{\mathrm{opt}}'/\zeta_{\mathrm{opt}}
+= \sum_{\gamma}\sum_{m\ge1}\log N_\gamma\,N_\gamma^{-ms}$, so that the periodic-orbit
+measure $\Theta_{\mathrm{opt}}(t)=\sum_\gamma\sum_{m\ge1}G_\gamma\,\delta(t-mG_\gamma)$
+has Laplace transform proportional to that derivative. Whether such a product converges
+in a right half-plane, and how far it continues analytically, is a property of the
+particular flow and must be established rather than assumed \cite{ruelle2002}.
 
-\paragraph{An obstruction.} The cheapest attempt at an arithmetic construction fails,
-and this is the one provable result of this appendix. Replace the medium by a finite
-optical graph with $E$ edges of fixed optical lengths $\ell_1,\dots,\ell_E$. Each closed
-orbit traverses edge $i$ a non-negative integer number of times, so its period lies in
-the finite-rank additive module $\Lambda = \mathbb{Z}\ell_1 + \cdots + \mathbb{Z}\ell_E$.
-But the prime logarithms are linearly independent over $\mathbb{Q}$: if
-$\sum_j q_j\log p_j = 0$, clearing denominators gives $\sum_j m_j\log p_j = 0$ with
-$m_j\in\mathbb{Z}$, and exponentiating gives $\prod_j p_j^{m_j} = 1$, so unique
-factorization forces every $m_j = 0$. Hence
-$\dim_{\mathbb{Q}}\operatorname{span}\{\log p\} = \infty$, and a rank-$E$ module cannot
-contain it.
+The Euler product, the repetition index $m$, and the log-weights assemble themselves
+exactly as in the Riemann Euler product
+$\zeta(s)=\prod_p(1-p^{-s})^{-1}$, whose logarithmic derivative is
+$-\zeta'/\zeta=\sum_p\sum_m(\log p)p^{-ms}$. This correspondence is the reason trace
+formulas resemble the explicit formula \cite{gutzwiller1990}. It is also why the
+correspondence is not by itself evidence of anything: every zeta function of this type
+has an Euler product over primitive objects with a repetition index.
+
+\subsection{An exact obstruction for finite additive length spectra}
+
+The cheapest arithmetic construction fails, and this is the one provable result of this
+appendix. Replace the medium by a finite optical graph with $E$ edges of fixed optical
+lengths $\ell_1,\dots,\ell_E$. Each closed orbit traverses edge $i$ a non-negative
+integer number of times, so its period lies in the finite-rank additive module
+$\Lambda = \mathbb{Z}\ell_1 + \cdots + \mathbb{Z}\ell_E$. But the prime logarithms are
+linearly independent over $\mathbb{Q}$: if $\sum_j q_j\log p_j = 0$, clearing
+denominators gives $\sum_j m_j\log p_j=0$ with $m_j\in\mathbb{Z}$, exponentiating gives
+$\prod_j p_j^{m_j}=1$, and unique factorization forces every $m_j=0$. Hence
+$\dim_{\mathbb{Q}}\operatorname{span}\{\log p\}=\infty$, which a rank-$E$ module cannot
+contain.
 
 \begin{theorem}[Finite-graph obstruction]\label{thm:finitegraph}
 No finite optical graph with additive edge-length weights realizes $C\log p$ as orbit
@@ -1709,18 +1717,19 @@ additive-travel-time regime. [evidence type A]
 \end{theorem}
 
 The escape routes are an infinite graph, a non-additive or state-dependent weight, or an
-operator whose spectrum encodes arithmetic without the classical lengths literally being
-$\log p$. We note that Hilbert--P\'olya never required anyone to build racetracks of
-length $\log p$; the earlier possibility of an explicit optical construction of the
-primes is closed, not the operator route.
+operator whose spectrum encodes arithmetic without the classical lengths being
+$\log p$. We emphasise that Hilbert--P\'olya never required racetracks of length
+$\log p$; it is the explicit optical construction of the primes that is closed here,
+not the operator route \cite{berrykeating1999}.
 
-\paragraph{What survives: counting, not equality.} A weaker target does survive, and a
-toy computation shows both why it looks impressive and why it is not. A bouquet of three
-loops $a,b,c$ with lengths $\ell_a,\ell_b,\ell_c$ generates primitive orbits as
-primitive cyclic words, with periods forced to be
-$L(w) = n_a\ell_a + n_b\ell_b + n_c\ell_c$; no prime is supplied to the model. Fitting
-the three lengths to $\log p_1,\dots,\log p_N$ (enumerating primitive necklaces to
-word-length 11, 25{,}486 orbits) reproduces:
+\subsection{A three-loop model: counting, not equality}
+
+A weaker target survives, and a toy computation shows both why it looks impressive and
+why it is not. A bouquet of three loops $a,b,c$ with lengths $\ell_a,\ell_b,\ell_c$
+generates primitive orbits as primitive cyclic words, with periods forced to be
+$L(w)=n_a\ell_a+n_b\ell_b+n_c\ell_c$; no prime is supplied to the model. Fitting the
+three lengths to $\log p_1,\dots,\log p_N$ (enumerating primitive necklaces to
+word-length 11, 25{,}486 orbits) gives
 \begin{center}
 \begin{tabular}{rrrrr}
 \toprule
@@ -1728,53 +1737,287 @@ $N$ & fitted $(\ell_a,\ell_b,\ell_c)$ & RMS rel.\ error & worst & entropy $h$ \\
 \midrule
 20 & $(0.7229,\,1.1274,\,1.6602)$ & $2.13\%$ & $4.92\%$ & $0.99937$ \\
 30 & $(0.7190,\,1.1279,\,1.6672)$ & $1.80\%$ & $5.09\%$ & $0.99972$ \\
-50 & $(0.7185,\,1.1309,\,1.6672)$ & $1.49\%$ & $4.96\%$ & $0.99903$ \\
+50 & $(0.71745,\,1.13196,\,1.66210)$ & $1.48\%$ & $4.96\%$ & $1.00013$ \\
 \bottomrule
 \end{tabular}
 \end{center}
+The fit is a shallow local optimum: independent restarts converge to
+$(0.7185,1.1309,1.6672)$ with RMS $1.49\%$, worst $4.96\%$ and $h=0.99903$, so the three
+lengths are determined to about three significant figures and the entropy to about
+$\pm0.1\%$ [evidence type B].
+
 For a suspension on a three-loop bouquet the topological entropy solves
 $e^{-h\ell_a}+e^{-h\ell_b}+e^{-h\ell_c}=1$, and the fitted lengths land at
-$h \approx 0.999$. This has been read as an independent discovery that the system
-self-organises to the entropy required by the prime number theorem under logarithmic
-coordinates. It is not.
+$h\approx1$. This has been read as an independent discovery that the system
+self-organises to the entropy required by the prime number theorem in logarithmic
+coordinates. It is not, and the reason is worth recording.
 
 \begin{proposition}[$h=1$ is forced by the objective]\label{prop:hforced}
-Suppose a hyperbolic flow satisfies $\pi_{\mathrm{orb}}(T) \sim e^{hT}/(hT)$ and its
-primitive periods satisfy $L_n \sim \log p_n$. Then $h = 1$. [evidence type A]
+Suppose a hyperbolic flow satisfies $\pi_{\mathrm{orb}}(T)\sim e^{hT}/(hT)$ and its
+primitive periods satisfy $L_n\sim\log p_n$. Then $h=1$. [evidence type A]
 \end{proposition}
 \begin{proof}
-Evaluate the counting function at $T=\log p_n$. Its left side is $n$; its right side is
-$e^{h\log p_n}/(h\log p_n) = p_n^{h}/(h\log p_n)$. Since $n \sim p_n/\log p_n$, agreement
-requires $p_n^{h}/h \sim p_n$, i.e.\ $p_n^{h-1}\sim h$, which forces $h=1$.
+Evaluate the counting function at $T=\log p_n$. The left side is $n$; the right side is
+$e^{h\log p_n}/(h\log p_n)=p_n^{h}/(h\log p_n)$. Since $n\sim p_n/\log p_n$, agreement
+requires $p_n^{h}/h\sim p_n$, that is, $p_n^{h-1}\sim h$, which forces $h=1$.
 \end{proof}
 
 So the optimiser was handed the answer: matching $L_n$ to $\log p_n$ forces the counting
-law to agree asymptotically, and the counting law is what pins $h$. The $0.1\%$
-departure from unity is the finite window and the fitting residual, not signal. The
-methodological point is the useful one: leading-order agreement is automatic and
-therefore worthless as evidence, so any advance in this direction has to live in the
-fluctuation term.
+law to agree asymptotically, and the counting law is what pins $h$. The departure from
+unity is the finite window and the fitting residual, not signal. The methodological
+point is the useful one: leading-order agreement is automatic and therefore worthless as
+evidence, so any advance must live in the fluctuation term.
 
-\paragraph{Where the zeros would have to be.} That fluctuation term is the only version
-of this programme with a chance of being interesting. Normalising $h=1$, one would have
-to match
+\subsection{The fluctuation test fails}
+
+At $T=11.8$ the leading counts agree closely. With $e^T=133{,}252$ one has
+$\pi(e^T)=12{,}434$, $\operatorname{Li}(e^T)=12{,}481$, and $12{,}496$ primitive orbits
+below $T$. The orbit count sits within $0.12\%$ of $\operatorname{Li}$, exactly as the
+entropy argument predicts.
+
+The residual structure does not agree. Comparing
+$R_{\mathrm{prime}}(T)=\pi(e^T)-\operatorname{Li}(e^T)$ with
+$R_{\mathrm{orb}}(T)=N_{\mathrm{orb}}(T)-\operatorname{Li}(e^T)$ after normalising the
+graph entropy to one gives correlations of approximately $0.24$ (raw), $0.23$
+(normalised) and $0.15$ (log-power spectral profiles) between the two residuals, and
+$\approx-0.02$ between their first differences. The first-difference correlation is the
+decisive one: it is zero. The model reproduces the coarse growth and none of the
+arithmetic fluctuation [evidence type B].
+
+This is the most useful result in the appendix, because it separates two phenomena that
+are easily conflated:
 \begin{equation}
-\Delta_{\mathrm{opt}}(T) = \pi_{\mathrm{orb}}(T) - \operatorname{Li}(e^T)
-\quad\text{to}\quad
-\Delta_{\mathrm{prime}}(T) = \pi(e^T) - \operatorname{Li}(e^T),
+\boxed{\text{exponential orbit proliferation}\;\neq\;\text{Riemann-zero arithmetic structure}.}
 \end{equation}
-not the growth rate but the error. Each orbit would additionally need its linearized
-Poincar\'e return map $P_\gamma$ on the four-dimensional contact plane $\ker\alpha$, and
-a Maslov-type index---the data a Gutzwiller-type trace formula consumes. None of that is
-constructed here.
+Topological entropy controls the leading proliferation of periodic orbits. It does not
+produce the correlations encoded by the nontrivial zeros, and RH is precisely a
+statement about those zeros and their consequence for prime-counting error. A model that
+matches the prime number theorem's leading term while failing its fluctuations
+demonstrates that orbit proliferation is insufficient.
 
-\paragraph{Net position.} What this appendix establishes is narrow and firm. The
-closed-ray obstruction of \S\ref{sec:extensions} is a periodic-orbit statement wearing a
-memory-layout costume; the dynamical zeta function is a natural and harmless packaging of
-closed-ray delays; the finite-graph route to arithmetic is provably closed; and
-leading-order agreement with the prime-log counting law is automatic. The programme is
-not refuted, but its easy version is, and the remaining version is a fluctuation problem
-whose entire content is the error term.
+\subsection{From orbits to a wave spectrum}
+
+Because optics is a wave phenomenon, the relevant question is whether the classical
+orbit structure leaves a fingerprint in a wave spectrum. Quantum graphs are the cleanest
+setting in which this can be answered exactly. A metric graph with a self-adjoint
+Laplacian has a secular equation $\det(I-U(k))=0$ combining bond propagation phases with
+vertex scattering amplitudes, and admits an exact periodic-orbit trace formula
+decomposing the density of states into a smooth Weyl term and an oscillatory
+orbit sum \cite{kottos1999,ruelle2002}.
+
+For the three-loop bouquet with Kirchhoff--Neumann conditions at the single vertex, the
+secular equation reduces in closed form to
+\begin{equation}
+\sum_{i=a,b,c}\tan\!\left(\frac{k\ell_i}{2}\right) = 0 .
+\end{equation}
+\begin{proposition}[Weyl counting for the three-loop bouquet]\label{prop:weyl}
+Let $L = \ell_a+\ell_b+\ell_c$. The eigenvalues of the Kirchhoff--Neumann Laplacian with
+$k\le K$, counted with multiplicity, satisfy $N(K)\sim LK/\pi$; the number of distinct
+wavenumbers satisfies $N_{\mathrm{dist}}(K)\sim LK/(2\pi)$, the factor two being the
+multiplicity of each root. [evidence type A]
+\end{proposition}
+For $L=3.51151$ and $K=1200$ this predicts $1{,}341.30$ eigenvalues, matching the
+enumerated $1{,}340$; the corresponding distinct-wavenumber count is $670$ against
+$LK/(2\pi)=670.65$. We record the multiplicity explicitly because "number of
+resonances" is otherwise ambiguous by a factor of two.
+
+Fourier transforming the spectral residual after subtracting the Weyl density produces
+peaks in the length domain. The first twenty prime-log targets matched detected peaks to
+$1.94\%$ RMS, and primitive-orbit support for the first thirty to $1.74\%$ RMS. A
+control set of 500 random entropy-one three-loop length assignments gave a median error
+of $5.66\%$, with none outperforming the tuned graph on the same criterion. These are
+optimised numerical agreements, not evidence of RH, and nearest-peak matching is
+sensitive to spectral crowding, degeneracy and resolution [evidence type B].
+
+What the experiment does establish is narrower: the designed classical length structure
+leaves an observable fingerprint in the wave spectrum. That is the classical-to-wave
+correspondence a real optical experiment would need.
+
+\subsection{Thermal readout}
+
+Because the mode density enters the thermal spectrum, the same fingerprint should appear
+in a thermal readout. With occupation $\hbar\omega/(e^{\hbar\omega/k_BT}-1)$ and a
+density of states split as $\rho=\bar\rho_{\mathrm{Weyl}}+\delta\rho_{\mathrm{orbit}}$,
+the thermal energy decomposes as
+$u(\omega,T)=u_{\mathrm{smooth}}(\omega,T)+\bar E(\omega,T)\,\delta\rho_{\mathrm{orbit}}(\omega)$
+\cite{planck1901}. For an illustrative temperature and Gaussian broadening the residual
+carried $\approx43\%$ of the smooth thermal component's RMS [evidence type B]. That
+percentage is not a physical prediction: it depends on the arbitrary broadening,
+temperature, window and coupling, and a real measurement would additionally require
+emissivity, loss, port coupling and detector response. The surviving conceptual point is
+that a thermal spectrum \emph{can} inherit the periodic-orbit fingerprint of the
+underlying wave system. The structural parallel with the primes is the shared
+architecture---smooth counting law, discrete spectrum, and corrections carrying geometric
+or arithmetic information---not any identity of laws.
+
+\subsection{The Ihara--Bass detour and why the critical line does not transfer}
+
+Graphs carry a second zeta function whose product over primitive non-backtracking cycles
+converts to a finite determinant:\footnote{The identity originates with Ihara \cite{ihara1966}
+and was extended and generalised by Bass \cite{bass1992} and Hashimoto \cite{hashimoto1989}.}
+\begin{equation}
+Z_G(u)^{-1} = (1-u^2)^{m-n}\det\!\big(I-uA+u^2(D-I)\big)
+= \det(I-uB),
+\end{equation}
+with $A$ the adjacency matrix, $D$ the degree matrix, and $B$ the non-backtracking
+Hashimoto matrix. An infinite-looking product over primitive cycles becomes a
+finite-dimensional determinant, which is exactly the orbit-to-spectrum transformation one
+would want.
+
+For a $(q+1)$-regular graph the Ihara zeta admits a Riemann-Hypothesis analogue: in the
+Ramanujan case the nontrivial poles lie on $|u|=q^{-1/2}$, and under $u=q^{-s}$ that
+circle becomes $\Re(s)=\tfrac12$. It is essential that this is \emph{not} a consequence of
+unitarity of a scattering matrix. The graph-theoretic critical-line statement depends on a
+specific spectral bound, closely tied to the Ramanujan property. The secular determinant
+of a self-adjoint quantum graph and the Ihara--Bass determinant are related members of one
+spectral-graph family but are not interchangeable formulas. A shared critical-line
+notation obtained by substituting $u=q^{-s}$ therefore does not transport any proof: what
+would be required is a genuine identity between the analytic continuations of the relevant
+spectral objects.
+
+Finally, the exponent $\tfrac12$ can be produced formally by multiplicative orbit weights:
+if each edge traversal carries magnitude $e^{-\ell_e/2}$ then an orbit has
+$|A_\gamma|=e^{-L_\gamma/2}$, and with $L_\gamma=\log p$ and a phase $e^{-itL_\gamma}$ one
+recovers $p^{-1/2-it}$, the arithmetic exponent on the critical line. This is
+straightforward to engineer in an attenuating transfer model, and it is not compatible with
+arbitrary unitary quantum-graph scattering, since orbit amplitudes are products of
+scattering-matrix entries whose magnitudes cannot be assigned independently. More
+importantly, inserting $e^{-L/2}$ does not show that any determinant's zeros lie on the
+critical line; it reproduces one formal factor of the desired arithmetic weighting.
+
+\subsection{Scope: what this does not establish}
+
+A self-adjoint graph Laplacian has real eigenvalues, a periodic-orbit trace formula, and a
+dynamical zeta; its classical lengths can be tuned to resemble prime logarithms over a
+finite range. None of these facts identifies its spectral determinant with the completed
+Riemann zeta function. The Hilbert--P\'olya requirement is not merely a self-adjoint
+operator with an interesting spectrum---such operators are abundant---but an exact
+correspondence with \emph{all} nontrivial zeros, with correct multiplicities and no
+unwanted spectral objects. The explicit formula additionally carries precise prime-power
+weights, zero contributions, analytic continuation, functional-equation structure and
+correction terms; a generic graph trace formula acquires none of these from having many
+periodic orbits or unit entropy.
+
+We therefore record the status of each element plainly. Established mathematics used here:
+the contact description of the optical characteristics (Appendix~\ref{app:contact}),
+additivity of periods along closed trajectories, periodic-orbit Euler products, the
+prime-orbit counting law, exact quantum-graph trace formulas, and the Ihara--Bass identity.
+The exact finite-rank obstruction (Theorem~\ref{thm:finitegraph}) and the forcing of
+$h=1$ (Proposition~\ref{prop:hforced}) are elementary but genuine. The three-loop fit, the
+spectral peak matching, the thermal residual and the fluctuation correlations are
+exploratory numerical results of a specific toy model [evidence type B]. The RH connection
+remains an analogy and a research direction, and the most valuable single outcome is the
+negative fluctuation result of the preceding subsections, which shows where a simple
+construction stops.
+
+\subsection{Next experiments and the return to memory}
+
+The next stage should stop optimising three loop lengths against more prime logarithms,
+which improves only a finite-window fit. The objective should move from orbit locations to
+spectral structure, optimising a trace-formula residual with terms for lengths,
+amplitudes, phases and spectrum,
+$\mathcal{J}=\lambda_L\mathcal{E}_{\mathrm{lengths}}
++\lambda_A\mathcal{E}_{\mathrm{amplitudes}}
++\lambda_\phi\mathcal{E}_{\mathrm{phases}}
++\lambda_S\mathcal{E}_{\mathrm{spectrum}}$,
+subject to actual scattering constraints rather than free orbit amplitudes, and penalising
+unmatched short orbits---matching a few desired trajectories is meaningless if the graph
+also produces a much larger population of undesired ones. Two further directions are more
+deeply founded than a small bouquet: hyperbolic surfaces, where Selberg's trace formula and
+zeta function give a rigorous geometry--spectrum correspondence through primitive closed
+geodesics \cite{selberg1956}, and a return to optics, constructing a refractive-index field
+with a controlled family of closed rays and studying its wave resonances.
+
+Finally, the excursion returns to the original problem. At a caustic, distinct directions
+share a position; on a closed orbit, distinct traversal histories share an instantaneous
+state. Both failures have the same shape: the representation identifies objects the
+measurement must distinguish, and the remedy is not more numerical precision but the
+correct state distinctions. A primitive orbit and its repetitions are not interchangeable,
+and the distinction between $\gamma,\gamma^2,\gamma^3,\dots$ is exactly what the Euler
+product organises, just as primes and prime powers play distinct roles in the logarithmic
+derivative. The analogy does not make optical rays arithmetic objects. It does exhibit a
+shared principle: the identities and repetitions of fundamental objects matter, and a
+representation that collapses them discards information that cannot be recovered
+afterwards. In the instrument that loss appears as false timing noise; in a periodic-orbit
+calculation it destroys the orbit spectrum; in a spectral determinant incorrect
+multiplicities produce an entirely different analytic function.
+
+\section{Cohomological form of the closed-ray obstruction}\label{app:cocycle}
+
+Theorem~\ref{thm:closedray} is the optical instance of a statement about flows,
+cocycles and coboundaries, and stating it in that generality both sharpens it and
+identifies which part of the delay can be compressed. Let $M$ be a smooth manifold, let
+$\phi^t:M\to M$ be the flow of a complete vector field $X$, and let
+$f:M\to(0,\infty)$ be a continuous delay accumulation rate with
+$D(x,T)=\int_0^T f(\phi^t x)\,dt$.
+
+\begin{theorem}[Coboundary obstruction]\label{thm:coboundary}
+If $\phi$ has a periodic orbit $\gamma$ of period $P>0$, there is no globally defined
+$C^1$ function $u:M\to\mathbb{R}$ with $Xu=f$. [evidence type A]
+\end{theorem}
+\begin{proof}
+Suppose $Xu=f$ holds. Along $\gamma$,
+$\tfrac{d}{dt}u(\phi^t x)=(Xu)(\phi^t x)=f(\phi^t x)$. Integrating over one period gives
+$u(\phi^P x)-u(x)=\int_0^P f(\phi^t x)\,dt$. Since $\phi^P x=x$ the left side vanishes
+while the right side is strictly positive because $f>0$. Hence $0>0$, a contradiction.
+\end{proof}
+
+\begin{corollary}\label{cor:optical}
+Theorem~\ref{thm:closedray} is the case in which $M$ is the five-dimensional
+fixed-frequency optical manifold, $\phi$ the Reeb flow and $f=n_g/c$ the group-delay rate.
+\end{corollary}
+
+The obstruction is therefore not an artefact of a particular data structure or a
+resolution limit; it is a statement that a strictly positive accumulation rate cannot be
+a gradient along the flow when a closed orbit exists. Two further observations convert it
+into a usable structure.
+
+The first is that $D$ is a dynamical cocycle. Additivity over concatenated intervals,
+\begin{equation}
+D(x,T+S) = D(x,T) + D\!\left(\phi^T x, S\right),
+\end{equation}
+is immediate from the definition, and is the defining property of an additive cocycle over
+$(\phi,\mathbb{R})$. A cocycle of the special form
+$D(x,T)=u(\phi^T x)-u(x)$ is a \emph{coboundary}. By Theorem~\ref{thm:coboundary}, positive
+delay around a closed ray is not a coboundary, so accumulated delay is a nontrivial
+cohomology class. The instantaneous state says where the ray is; the cocycle says what it
+has accumulated in getting there, and these are different kinds of information.
+
+The second is that the obstruction is quantitative rather than binary, because the
+periodic-orbit integrals control which part of the cocycle is removable. This is the
+content of Liv\v{s}ic's theorem, which for suitable hyperbolic systems states that
+vanishing integrals over all periodic orbits are sufficient for $f$ to be a
+coboundary \cite{livsic1972,katok1995}. Our observable fails that hypothesis immediately,
+but the theorem indicates the right decomposition. Fix a reference rate $a$ and ask
+whether $f-a$ is a coboundary.
+
+\begin{proposition}[History/correction split]\label{prop:split}
+If $f-a=Xu$ for some globally defined $u$, then
+\begin{equation}
+D(x,T)=aT+u(\phi^T x)-u(x),
+\end{equation}
+and a single constant $a$ is admissible if and only if
+$\oint_\gamma f\,dt = a\,P_\gamma$ for every periodic orbit $\gamma$, i.e.\ if and only
+if every closed orbit has the same mean delay rate $a$.
+\end{proposition}
+
+Thus the accumulated delay separates into an elapsed-history contribution $aT$ and a
+state-dependent correction $u(\phi^T x)-u(x)$. The first is exactly the part that no
+instantaneous encoding can supply, and the second is compressible. This is a design
+principle for a delay-aware encoding: remove the coboundary component, retaining history
+information only for the non-coboundary part. It also bounds what the prototype of
+\S\ref{sec:addressing} could have achieved. A general flow need not admit a single lap
+counter, nor any finite-dimensional history variable valid for all trajectories, unless
+the periodic-orbit mean rates are degenerate in the sense of
+Proposition~\ref{prop:split}---which for a genuinely dispersive optical medium they are
+not.
+
+We flag the limits of this appendix explicitly. Theorem~\ref{thm:coboundary} and
+Proposition~\ref{prop:split} are proved under only smoothness and positivity. The
+Liv\v{s}ic route to a full characterisation of the removable component requires stated
+hyperbolicity and regularity hypotheses that we have not verified for the optical flow,
+and a memory-minimality theorem would require the encoder and reconstruction requirements
+to be formalised, which the prototype does not do.
 
 \section*{Data and code availability}
 The released artifacts accompany this manuscript: the synthetic ray generator and
