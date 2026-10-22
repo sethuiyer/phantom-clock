@@ -1,0 +1,1451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f5f6f7" />
+  <meta name="description" content="The Intern, the Ellipsoid, and the Clock That Might Be Hiding Inside Another Clock — a mathematical essay on optical phase space, caustics, formally verified memory, and why the wrong address map can invent a clock." />
+  <title>The Intern, the Ellipsoid, and the Clock That Might Be Hiding Inside Another Clock — optical</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,450;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232d2a2e'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='11' fill='none' stroke='%23ffd866' stroke-width='1.6'/%3E%3Cellipse cx='16' cy='16' rx='8.5' ry='6' fill='none' stroke='%23ab9df2' stroke-width='1.2' opacity='.75'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23ffd866'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    // Set the theme before first paint; default to the system preference.
+    (function () {
+      try {
+        var stored = localStorage.getItem("optical-theme");
+        var dark = stored
+          ? stored === "dark"
+          : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", dark ? "#2d2a2e" : "#f5f6f7");
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#essay">Skip to the essay</a>
+  <div class="reading-progress" aria-hidden="true"><div></div></div>
+
+  <header class="site-header">
+    <div class="masthead-inner">
+      <a class="brand" href="#top" aria-label="optical — notes on light, memory, and measurement">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="16" cy="16" rx="13.5" ry="10.5"/><ellipse cx="16" cy="16" rx="8.5" ry="5.5" opacity=".55"/><circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="brand-word">optical<span class="brand-dot">.</span></span>
+      </a>
+
+      <p class="masthead-meta">
+        <span class="meta-fields">Optics · Memory · Metrology</span>
+        <span class="meta-divider" aria-hidden="true"></span>
+        <span class="meta-issue">Essay 01</span>
+      </p>
+
+      <span class="masthead-spacer" aria-hidden="true"></span>
+
+      <nav class="site-nav" aria-label="On this page">
+        <a href="#essay">Essay</a>
+        <a href="#lab">Geometry lab</a>
+        <a href="#extensions">Extensions</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="search-trigger" type="button" aria-label="Search the essay" aria-keyshortcuts="Meta+K Control+K">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.6 15.6 4.4 4.4"/></svg>
+          <span class="search-label">Search</span><kbd aria-hidden="true">⌘K</kbd>
+        </button>
+        <span class="header-divider" aria-hidden="true"></span>
+        <button class="icon-button theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
+          <span class="theme-icon theme-icon--sun" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.2v2.1M12 19.7v2.1M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M2.2 12h2.1M19.7 12h2.1M4.9 19.1l1.5-1.5M17.6 6.4l1.5-1.5"/></svg>
+          </span>
+          <span class="theme-icon theme-icon--moon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 14.6A8.7 8.7 0 0 1 9.4 3.8a8.7 8.7 0 1 0 10.8 10.8Z"/></svg>
+          </span>
+        </button>
+        <button class="icon-button mobile-menu" type="button" aria-label="Toggle table of contents" aria-expanded="false" aria-controls="chapter-list">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-layout">
+    <aside class="chapter-sidebar" aria-label="Contents">
+      <header class="rail-head">
+        <span class="rail-kicker"><span class="rail-mark" aria-hidden="true"></span>Contents</span>
+        <span class="rail-count"><span id="chapter-count">16</span><span class="rail-count-label">sections</span></span>
+      </header>
+      <div class="rail-ruler" aria-hidden="true"></div>
+      <nav id="chapter-list" aria-label="Table of contents">
+        <a href="#s1" class="chapter-link"><span class="chapter-number">01</span><span class="chapter-title">A Monday morning assignment</span></a>
+        <a href="#s2" class="chapter-link"><span class="chapter-number">02</span><span class="chapter-title">Why an ordinary array is wrong</span></a>
+        <a href="#s3" class="chapter-link"><span class="chapter-number">03</span><span class="chapter-title">A progressively elliptical domain</span></a>
+        <a href="#s4" class="chapter-link"><span class="chapter-number">04</span><span class="chapter-title">Fermat’s principle as an address generator</span></a>
+        <a href="#s5" class="chapter-link"><span class="chapter-number">05</span><span class="chapter-title">Cauchy, or why rays refuse to be indices</span></a>
+        <a href="#s6" class="chapter-link"><span class="chapter-number">06</span><span class="chapter-title">The five-dimensional escape hatch</span></a>
+        <a href="#s7" class="chapter-link"><span class="chapter-number">07</span><span class="chapter-title">Constructing the contiguous address space</span></a>
+        <a href="#s8" class="chapter-link"><span class="chapter-number">08</span><span class="chapter-title">Why Ada suddenly makes sense</span></a>
+        <a href="#s9" class="chapter-link"><span class="chapter-number">09</span><span class="chapter-title">The IIT-JEE-style mathematical hammer</span></a>
+        <a href="#s10" class="chapter-link"><span class="chapter-number">10</span><span class="chapter-title">The femtosecond connection</span></a>
+        <a href="#s11" class="chapter-link"><span class="chapter-number">11</span><span class="chapter-title">What can actually be built in four days</span></a>
+        <a href="#s12" class="chapter-link"><span class="chapter-number">12</span><span class="chapter-title">From optical geometry to rate–distortion</span></a>
+        <a href="#s13" class="chapter-link"><span class="chapter-number">13</span><span class="chapter-title">Five experiments: the false clock</span></a>
+        <a href="#s14" class="chapter-link"><span class="chapter-number">14</span><span class="chapter-title">The final surprise</span></a>
+        <a href="#s15" class="chapter-link"><span class="chapter-number">15</span><span class="chapter-title">Five theoretical extensions</span></a>
+        <a href="#s16" class="chapter-link"><span class="chapter-number">16</span><span class="chapter-title">Epilogue: Thursday afternoon</span></a>
+        <a href="#appendix-a" class="chapter-link chapter-link--appendix"><span class="chapter-number">A</span><span class="chapter-title">Released encoder &amp; GNATprove transcript</span></a>
+        <a href="#appendix-b" class="chapter-link chapter-link--appendix"><span class="chapter-number">B</span><span class="chapter-title">Contact geometry</span></a>
+        <a href="#references" class="chapter-link chapter-link--appendix"><span class="chapter-number">Bib</span><span class="chapter-title">Bibliography</span></a>
+      </nav>
+      <footer class="rail-foot">
+        <div class="side-progress" aria-hidden="true"><span></span></div>
+        <div class="rail-foot-row">
+          <span class="rail-foot-mark" aria-hidden="true"></span>
+          <span id="reading-left">Reading progress</span>
+        </div>
+      </footer>
+      <button class="rail-close" type="button" aria-label="Close contents">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19"/></svg>
+      </button>
+    </aside>
+
+    <main id="top">
+      <!-- ============================== HERO ============================== -->
+      <section class="opening-hero" aria-label="Essay opening">
+        <div class="opening-grid">
+          <div class="opening-copy">
+            <div class="opening-kicker">
+              <span class="opening-square" aria-hidden="true"></span>
+              <span>Optics × Computer Science — Essay</span>
+              <span class="opening-kicker-rule" aria-hidden="true"></span>
+              <span>October 22, 2026</span>
+            </div>
+            <h1 class="opening-title">
+              <span class="opening-title-line">The Intern, <em>the Ellipsoid,</em></span>
+              <span class="opening-title-line opening-title-line--offset">and the Clock That Might</span>
+              <span class="opening-title-line">Be Hiding Inside</span>
+              <span class="opening-title-line opening-title-line--last">Another Clock</span>
+            </h1>
+            <p class="opening-description">
+              A mathematical adventure through geometric optics, caustics, phase-space
+              geometry, formally verified memory, and an unreasonable four-day deadline.
+              The surprising claim: the correct memory addresses may need to follow the
+              geometry of <em>light propagation</em>, not the coordinates occupied by matter —
+              and a wrong memory layout can invent a clock that was never there.
+            </p>
+            <div class="opening-links">
+              <a class="opening-link opening-link--primary" href="#s1">Start reading <span class="opening-link-arrow" aria-hidden="true">↓</span></a>
+              <a class="opening-link" href="#lab">Play with the geometry <span class="opening-link-arrow" aria-hidden="true">↗</span></a>
+              <a class="opening-link" href="#extensions">Jump to the extensions <span class="opening-link-arrow" aria-hidden="true">↗</span></a>
+            </div>
+            <div class="opening-byline">
+              <span class="byline-name">Sethurathienam Iyer</span>
+              <span class="byline-sep" aria-hidden="true">·</span>
+              <span>BITS Pilani, Goa Campus</span>
+              <span class="byline-sep" aria-hidden="true">·</span>
+              <span><a href="https://orcid.org/0009-0008-5446-2856" rel="noopener noreferrer">ORCID ↗</a></span>
+            </div>
+          </div>
+          <aside class="opening-plate" aria-label="Nested optical shells">
+            <div class="opening-plate-head">
+              <span>The progressively elliptical domain</span>
+              <span>α = 0.2 · β = 0.2</span>
+            </div>
+            <div class="opening-plate-art">
+              <svg class="opening-figure" viewBox="0 0 520 320" role="img" aria-label="Nested ellipsoidal shells with axes growing along x and shrinking along z">
+                <g class="h-frame">
+                  <rect x="14" y="14" width="492" height="292" />
+                  <path d="M14 24v8M14 296v8M506 24v8M506 296v8" class="h-corner"/>
+                  <path d="M260 22v12M22 160h12M498 160h12" class="h-frame-tick"/>
+                </g>
+                <g class="h-axes">
+                  <line x1="20" y1="160" x2="500" y2="160" stroke-dasharray="3 5" />
+                  <line x1="260" y1="20" x2="260" y2="300" stroke-dasharray="3 5" />
+                </g>
+                <g class="h-shells" fill="none">
+                  <ellipse cx="260" cy="160" rx="182" ry="150" stroke-width="1.5" />
+                  <ellipse cx="260" cy="160" rx="146" ry="134" stroke-width="1.2" opacity=".7" />
+                  <ellipse cx="260" cy="160" rx="96" ry="106" stroke-width="1" opacity=".45" />
+                </g>
+                <g class="h-points">
+                  <circle cx="260" cy="160" r="3.5" />
+                  <circle cx="442" cy="160" r="3" opacity=".8" />
+                  <circle cx="260" cy="10" r="3" opacity=".8" />
+                </g>
+                <g class="h-labels">
+                  <text x="452" y="152">x</text>
+                  <text x="268" y="20">z</text>
+                  <text x="452" y="180">a(ρ) = 1 + αρ²</text>
+                  <text x="276" y="292">c(ρ) = 1 − βρ²</text>
+                </g>
+              </svg>
+            </div>
+            <p class="opening-plate-caption">Nested shells of the ellipsoidal family from §3: the horizontal semiaxis grows with ρ, the vertical shrinks. Uniform index increments are not uniform physical distances.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ========================== CENTRAL IDEA ========================= -->
+      <section class="central-idea" aria-label="Central claim">
+        <div class="idea-label"><span>Central claim</span><span class="idea-arrow" aria-hidden="true">↘</span></div>
+        <div class="idea-content">
+          <p>The optimal representation is <em>not</em> the one that stores the fewest coordinates or minimizes a single timing error. It is the least expensive representation that <em>preserves every distinction the instrument may need to make.</em></p>
+          <span>Compactness is a storage property. Locality is a geometric property. They are not interchangeable.</span>
+        </div>
+      </section>
+
+      <!-- ========================== EVIDENCE KEY ========================= -->
+      <section class="evidence-key" aria-label="Evidence taxonomy">
+        <div class="evidence-key-card">
+          <span class="ev-badge ev-badge--a">A</span>
+          <div><strong>Mathematical identities</strong><span>Proved. Snell’s law from Fermat’s principle, the law of total variance, the encoder’s range bound.</span></div>
+        </div>
+        <div class="evidence-key-card">
+          <span class="ev-badge ev-badge--b">B</span>
+          <div><strong>Synthetic numerical results</strong><span>Demonstrated under stated models and sample sizes — controlled failure modes, not atomic-clock measurements.</span></div>
+        </div>
+        <div class="evidence-key-card">
+          <span class="ev-badge ev-badge--c">C</span>
+          <div><strong>Formally verified claims</strong><span>These need a proof transcript (e.g. GNATprove). A transcript is presented in Appendix A for the released encoder, its chart table, and its contract structure only.</span></div>
+        </div>
+        <p class="evidence-key-note">Every claim in this essay is tagged. “Proved” means (A). “The simulation shows” means (B). “We have not proved” means (C) is missing. That distinction is the essay’s immune system.</p>
+      </section>
+
+      <!-- ========================== GEOMETRY LAB ========================= -->
+      <section id="lab" class="lab-section" aria-labelledby="lab-title">
+        <div class="section-heading">
+          <div><div class="eyebrow">Progressive ellipticity · α = 0.2, β = 0.2</div><h2 id="lab-title">Play with the geometry</h2></div>
+          <span class="interactive-badge"><span aria-hidden="true"></span>Interactive</span>
+        </div>
+        <p class="section-description">Drag ρ to walk from the center to the boundary. The horizontal semiaxis grows as \(1+\alpha\rho^2\), the vertical shrinks as \(1-\beta\rho^2\). Watch what happens to the physical displacement produced by a fixed radial step along each axis.</p>
+        <div class="lab-card">
+          <div class="lab-card-heading"><span>Ellipsoidal shell family — xz cross-section</span><span class="experiment-tag">§3 · Proposition 1</span></div>
+          <div class="lab-stage">
+            <svg id="lab-canvas" viewBox="0 0 640 380" role="img" aria-label="Interactive cross-section of the ellipsoidal shell family"></svg>
+          </div>
+          <div class="lab-controls">
+            <div class="lab-slider-row">
+              <label for="rho-slider">ρ — normalized radial parameter</label>
+              <input type="range" id="rho-slider" min="0" max="1" step="0.01" value="0.72" aria-valuetext="0.72" />
+              <output id="rho-val" for="rho-slider">0.72</output>
+            </div>
+            <div class="lab-readouts">
+              <div class="lab-readout"><span class="lab-readout-label">dx/dρ = 1 + 3αρ²</span><strong id="dxdr">—</strong></div>
+              <div class="lab-readout"><span class="lab-readout-label">dz/dρ = 1 − 3βρ²</span><strong id="dzdr">—</strong></div>
+              <div class="lab-readout"><span class="lab-readout-label">displacement ratio</span><strong id="ratio">—</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= ESSAY ============================= -->
+      <section id="essay" class="reading-section" aria-label="Annotated essay">
+        <div class="reading-topline">
+          <div class="reading-identity">
+            <span class="reading-kicker">Essay</span>
+            <span class="reading-identity-meta">16 sections · 6 theorems · 5 experiments</span>
+          </div>
+          <div class="reading-tools">
+            <span class="reading-tools-label" aria-hidden="true">Type</span>
+            <button type="button" class="text-size" aria-label="Increase reading text size" title="Cycle reading text size">Aa</button>
+            <button type="button" class="focus-toggle" aria-label="Toggle distraction-free reading" aria-pressed="false" title="Distraction-free reading">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <article id="article-content" class="prose">
+
+          <section class="reading-route" aria-label="Reading route">
+            <div class="reading-route-head">
+              <span class="route-kicker">Reading route</span>
+              <h2>Four transitions do all the work</h2>
+              <p>Geometry → optics → phase space → information theory. Each stage changes what “the address” is allowed to mean.</p>
+            </div>
+            <ol class="route-track">
+              <li><a class="route-phase" href="#s3"><span class="route-index">01</span><span class="route-meta">Geometry</span><span class="route-phase-title">The domain is not a box</span><span class="route-question">What does a progressively elliptical volume do to uniform indexing?</span></a></li>
+              <li><a class="route-phase" href="#s4"><span class="route-index">02</span><span class="route-meta">Optics</span><span class="route-phase-title">Light writes the addresses</span><span class="route-question">Why does Fermat’s principle belong in a data-structure design meeting?</span></a></li>
+              <li><a class="route-phase" href="#s6"><span class="route-index">03</span><span class="route-meta">Phase space</span><span class="route-phase-title">Five dimensions, not six</span><span class="route-question">What survives at a caustic — and what does not?</span></a></li>
+              <li><a class="route-phase" href="#s12"><span class="route-index">04</span><span class="route-meta">Information</span><span class="route-phase-title">Cells are a budget</span><span class="route-question">How should a finite number of addresses be spent?</span></a></li>
+            </ol>
+          </section>
+
+          <!-- §1 -->
+          <h2 id="s1">1. A Monday morning assignment</h2>
+
+          <p>Imagine that you are an intern at a company building optical instrumentation. It is Monday morning. Your supervisor gives you a seemingly straightforward assignment.</p>
+
+          <blockquote class="assignment">
+            <p>“We’re designing a custom system-on-chip. We need a memory structure for measurements that live in three spatial dimensions and two rotational dimensions. The measurements occupy a volume, but the geometry becomes progressively more elliptical toward the boundary. We want contiguous storage, not five separate coordinate arrays. And we’re using Ada.”</p>
+            <p>Then comes the purpose of the device: “We want to detect femtosecond-scale fluctuations in an atomic clock, to investigate whether there is a subtler timing structure beneath the one we’re currently measuring.”</p>
+            <p>“Oh, and we’d like a prototype in four days.”</p>
+          </blockquote>
+
+          <p>This is the kind of problem that makes computer science interesting, because almost every noun in the assignment conceals another discipline. <em>Memory</em> conceals topology. <em>Ellipsoid</em> conceals differential geometry. <em>Optics</em> conceals Hamiltonian mechanics. <em>Femtosecond</em> conceals precision metrology. <em>Ada</em> conceals formal verification. And <em>four days</em> conceals a very unfortunate weekend.</p>
+
+          <p>Our goal is to construct a useful prototype without pretending that four days is enough to solve the underlying physics. We will not discover a new clock in this essay. We will discover why a <em>wrong memory layout can invent one</em>.</p>
+
+          <h3 id="s1-problem">The design problem, formally</h3>
+
+          <p>The paper’s main technical contribution can be stated as a single constrained optimization problem before any of its components are derived. Let \(Q\) be an optical state drawn from the instrument’s operating distribution \(\mu\) on the fixed-frequency manifold \(\mathcal{M}_{\omega_0}\), let \(T_g(Q)\) be its group-delay correction, and let \(B_{\mathcal{P}}(Q)\) denote the cell of a partition \(\mathcal{P} = \{C_1,\ldots,C_K\}\) containing \(Q\). The design problem is</p>
+
+          \[
+          \boxed{\begin{aligned}
+          \min_{\mathcal{P},\{m_k\}} \quad
+          &amp; \mathbb{E}\!\left[\operatorname{Var}\!\left(T_g(Q)\mid B_{\mathcal{P}}(Q)\right)\right]
+            + \sum_{k=1}^{K} \frac{p_k v_k}{m_k} \\[2pt]
+          \text{subject to}\quad
+          &amp; |\mathcal{P}| \le K_{\max}, \\
+          &amp; \textstyle\sum_{k=1}^{K} m_k \le M, \\
+          &amp; \text{each cell has one canonical chart owner and one address,} \\
+          &amp; \text{addresses are contiguous and collision-free (Theorem 1),} \\
+          &amp; \text{required ray-branch distinctions are preserved (Theorem 4),} \\
+          &amp; \text{the chart table is frozen per acquisition batch,}
+          \end{aligned}}
+          \]
+
+          <p>where \(p_k = \mathbb{P}(Q \in C_k)\), \(v_k = \operatorname{Var}(T_g \mid C_k)\), \(K_{\max}\) is the address budget, and \(M\) is the calibration budget. The objective’s first term is the geometric distortion resolved by the partition (exactly decomposed by the law of total variance, §12); the second is the statistical cost of estimating each cell’s correction from \(m_k\) calibration samples. The constraints encode the architectural requirements that are not tradeable: representation correctness (contiguity, uniqueness, frozen versioning) and preservation of the optical distinctions the measurement needs.</p>
+
+          <p>Everything that follows — the manifold geometry, the encoder, the rate–distortion analysis, and the experiments — is in service of this problem. Making it explicit up front also makes the central claim precise: the optimum is not the partition that minimizes timing distortion alone; it is the <em>cheapest partition in the feasible set</em>.</p>
+
+          <div class="asides-note"><span class="asides-kicker">Sources &amp; neighbors</span>
+            <p>This essay stands on a few shoulders: Fermat’s principle and the eikonal equation as treated by <a href="https://doi.org/10.1017/CBO9781139644181" rel="noopener noreferrer">Born &amp; Wolf</a>; Hamiltonian characteristics, phase-space flows and Liouville’s theorem by <a href="https://doi.org/10.1007/978-1-4757-2063-1" rel="noopener noreferrer">Arnold</a>; caustic morphologies by <a href="https://doi.org/10.1016/S0079-6638(08)70215-4" rel="noopener noreferrer">Berry &amp; Upstill</a>; contact structure of the fixed-frequency hypersurface by <a href="https://doi.org/10.1017/CBO9780511611438" rel="noopener noreferrer">Geiges</a>; atomic-frequency-standard statistics by <a href="https://doi.org/10.1109/PROC.1966.4634" rel="noopener noreferrer">Allan</a>; rate–distortion foundations by <a href="https://ieeexplore.ieee.org/document/5311476" rel="noopener noreferrer">Shannon</a>, <a href="https://doi.org/10.1109/TIT.1982.1056489" rel="noopener noreferrer">Lloyd</a>, <a href="https://doi.org/10.1109/18.720541" rel="noopener noreferrer">Gray &amp; Neuhoff</a>; functional quantization by <a href="https://doi.org/10.1109/TIT.2011.2158882" rel="noopener noreferrer">Misra, Goyal &amp; Varshney</a>; nonparametric rates by <a href="https://doi.org/10.1214/aos/1176345969" rel="noopener noreferrer">Stone</a>; perturbation analysis by <a href="https://doi.org/10.1007/978-1-4612-1394-9" rel="noopener noreferrer">Bonnans &amp; Shapiro</a>; and SPARK methodology by <a href="https://doi.org/10.1017/CBO9781139629294" rel="noopener noreferrer">McCormick &amp; Chapin</a>. The full bibliography, including the author’s prior frameworks, is at the end.</p>
+          </div>
+
+          <!-- §2 -->
+          <h2 id="s2">2. Why an ordinary array is the wrong starting point</h2>
+
+          <p>A conventional multidimensional array is just a convenient interpretation of linear memory. Suppose we index by three integers</p>
+
+          \[
+          (i,j,k), \qquad 0 \le i \lt N_x, \quad 0 \le j \lt N_y, \quad 0 \le k \lt N_z.
+          \]
+
+          <p>Row-major representation uses</p>
+
+          \[
+          A(i,j,k) = (iN_y + j)N_z + k.
+          \]
+
+          <p>This is beautiful because it is simple, collision-free, and invertible. Add two angular coordinates, discretized into \(N_\theta\) and \(N_\phi\) bins, and we obtain</p>
+
+          \[
+          A(i,j,k,p,q) = ((((iN_y+j)N_z+k)N_\theta+p)N_\phi+q).
+          \]
+
+          <p>Five dimensions have become one integer. Problem solved?</p>
+
+          <p>Not remotely.</p>
+
+          <p>This formula assumes that the logical domain is a Cartesian product \(X \times Y \times Z \times \Theta \times \Phi\). But an ellipsoidal volume is not a rectangular box, and a progressively deforming ellipsoidal volume is not naturally described by uniformly sampled Cartesian slices.</p>
+
+          <p>We could allocate the bounding box and leave unused cells outside the valid domain. That wastes memory. We could enumerate valid lattice points and give them consecutive ranks. That saves memory — but does not guarantee that neighboring optical states are stored near one another.</p>
+
+          <p>And this distinction is central. A <em>compact address map</em> answers: “Can I store every admissible state without wasting addresses?” An optical memory architecture must answer a harder question: “Can I store states so that the geometry relevant to the measurement survives discretization?”</p>
+
+          <p class="pull"><strong>Compactness is a storage property. Locality is a geometric property. They are not interchangeable.</strong></p>
+
+          <p>Consider two measurements that are close in Euclidean space but have very different propagation delays, because they arrived along different ray branches. A compact spatial rank will put them together. An optical memory that cares about timing should <em>not</em> necessarily put them together. Conversely, two measurements that are far apart in space but share the same group delay may be natural comparison partners for timing analysis — a spatial layout will put them far apart.</p>
+
+          <p>The intern’s first mistake, if he is not careful, will be to optimize the wrong thing: to make the array <em>small</em>, rather than to make it <em>faithful</em>.</p>
+
+          <!-- §3 -->
+          <h2 id="s3">3. A progressively elliptical domain</h2>
+
+          <p>Let’s construct a toy model of progressive ellipticity. Introduce a normalized radial parameter \(0 \le \rho \le 1\) and a unit direction \(\mathbf{u} \in S^2\), and define</p>
+
+          \[
+          \mathbf{x}(\rho,\mathbf{u}) = \rho
+          \begin{pmatrix} a(\rho) &amp; 0 &amp; 0 \\ 0 &amp; b(\rho) &amp; 0 \\ 0 &amp; 0 &amp; c(\rho) \end{pmatrix}
+          \mathbf{u},
+          \qquad
+          a(\rho) = 1 + \alpha\rho^2, \quad b(\rho) = 1, \quad c(\rho) = 1 - \beta\rho^2,
+          \]
+
+          <p>with the restrictions</p>
+
+          \[
+          \boxed{\alpha \gt 0, \qquad 0 \lt \beta \lt \tfrac13.}
+          \]
+
+          <p>These are not cosmetic. The semiaxes of the shell at radial parameter \(\rho\) are</p>
+
+          \[
+          s_x(\rho) = \rho + \alpha\rho^3, \qquad s_y(\rho) = \rho, \qquad s_z(\rho) = \rho - \beta\rho^3.
+          \]
+
+          <div class="theorem" id="prop-nesting">
+            <div class="theorem-head"><span class="theorem-tag">Proposition 1</span><span class="theorem-title">Nesting</span></div>
+            <div class="theorem-body">
+              <p>For \(\alpha \gt 0\) and \(0 \lt \beta \lt 1/3\), the family \(\{\mathbf{E}_\rho\}_{0 \le \rho \le 1}\) is strictly nested: each shell encloses the preceding one, and the construction extends continuously to the center, where the shell at \(\rho = 0\) degenerates to a point.</p>
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Differentiate: \(\frac{ds_x}{d\rho} = 1 + 3\alpha\rho^2 \gt 0\), \(\frac{ds_y}{d\rho} = 1 \gt 0\), and \(\frac{ds_z}{d\rho} = 1 - 3\beta\rho^2 \gt 0\), the final inequality following from \(\beta \lt 1/3\). Strictly increasing semiaxes imply each shell is interior to the next. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>Near the center, the three axes are approximately equal. Near the boundary, their ratios differ. We have produced a family of increasingly elliptical shells.</p>
+
+          <p>However, this is only a geometric model. It does not establish that light propagates along those shells, or that the shells are surfaces of equal optical travel time. To determine that, we need optics — and this is where a seventeenth-century mathematician enters the data-structure design meeting.</p>
+
+          <!-- §4 -->
+          <h2 id="s4">4. Fermat’s principle as an address generator</h2>
+
+          <p>Fermat’s principle says that physical rays follow paths for which optical travel time is stationary under suitable variations. For a refractive-index field \(n(\mathbf{x})\), the travel-time functional is</p>
+
+          \[
+          \mathcal{T}[\gamma] = \frac1c \int_\gamma n(\mathbf{x}) \, d\ell,
+          \]
+
+          <p>where \(\ell\) is physical arc length along the path. A physical ray satisfies</p>
+
+          \[
+          \boxed{\delta \mathcal{T} = 0.}
+          \]
+
+          <p>“Stationary” is more precise than “minimum”: a ray path need not be a strict global minimum.</p>
+
+          <p>Why should a memory engineer care? Because the device is not primarily interested in where a measurement sits in Euclidean space. It is interested in the <em>phase and arrival time</em> of optical information. Two spatially nearby measurements can have different propagation delays; two spatially distant measurements can share the same optical phase or travel-time surface.</p>
+
+          <p>Introduce a phase-travel-time field \(T_p(\mathbf{x})\). For isotropic geometric optics at a fixed frequency, away from singularities, it satisfies the eikonal equation:</p>
+
+          \[
+          \boxed{\left|\nabla T_p(\mathbf{x})\right|^2 = \frac{n_p^2(\mathbf{x},\omega_0)}{c^2}.}
+          \]
+
+          <p>The level sets \(\Sigma_\tau = \{\mathbf{x} : T_p(\mathbf{x}) = \tau\}\) are equal-phase wavefronts at the chosen frequency. Now the memory problem changes character. Instead of asking which Cartesian cells belong inside an ellipsoid, we ask which optical states belong to each propagation-related layer. If the actual optical medium produces increasingly elliptical wavefronts, the resulting memory organization can reflect that deformation.</p>
+
+          <div class="remark">
+            <span class="remark-kicker">Conditional</span>
+            <p>Progressive ellipticity must come from the optical model or measured calibration data. Fermat’s principle does not guarantee it. Using optical propagation geometry as an organizing principle — rather than treating the ellipsoidal boundary as a Boolean mask — is our first architectural improvement. And it creates a new problem: what happens when two rays arrive at the same place?</p>
+          </div>
+
+          <!-- §5 -->
+          <h2 id="s5">5. The Cauchy problem, or why rays refuse to behave like array indices</h2>
+
+          <p>Suppose we specify an initial wavefront, together with its initial phase and propagation directions. Propagating this initial data through the medium is a Cauchy problem: determine the subsequent solution from appropriate initial conditions.</p>
+
+          <p>The eikonal equation belongs to the Hamilton–Jacobi family. Its characteristic curves can be obtained from a Hamiltonian. For the moment, fix the optical frequency and suppress it from the notation. Define</p>
+
+          \[
+          H(\mathbf{x},\mathbf{p}) = \frac12 \left( |\mathbf{p}|^2 - \frac{n_p^2(\mathbf{x})}{c^2} \right).
+          \]
+
+          <p>Optical rays lie on \(H = 0\) and evolve according to Hamilton’s equations:</p>
+
+          \[
+          \boxed{\frac{d\mathbf{x}}{ds} = \frac{\partial H}{\partial \mathbf{p}} = \mathbf{p}}, \qquad
+          \boxed{\frac{d\mathbf{p}}{ds} = -\frac{\partial H}{\partial \mathbf{x}} = \frac{n_p(\mathbf{x})}{c^2} \nabla n_p(\mathbf{x})},
+          \]
+
+          <p>where \(s\) is a characteristic parameter, not physical time. On \(H = 0\), \(|\mathbf{p}| = n_p/c\), hence \(\left|d\mathbf{x}/ds\right| = n_p/c\) and \(ds = (c/n_p)\,d\ell\), giving</p>
+
+          \[
+          \boxed{s - s_0 = c \int_{\ell_0}^{\ell} \frac{d\ell'}{n_p(\ell')}.}
+          \]
+
+          <p>This parameter is neither physical time nor optical travel time \(T_p = \int \frac{n_p}{c}\, d\ell\); its normalization changes traversal speed but not the geometric ray trajectory.</p>
+
+          <p>Given an initial wavefront parameterized by two coordinates \((u,v)\), the ray family \(\mathbf{X}(s,u,v)\) locally provides three coordinates for three-dimensional space. That looks promising. Unfortunately, nature has invented caustics.</p>
+
+          <h3 id="s5-caustics">The caustic problem</h3>
+
+          <p>When sunlight passes through a glass of water, bright curves appear on the table because neighboring rays concentrate. Mathematically, the map \((s,u,v) \mapsto \mathbf{X}(s,u,v)\) may cease to be locally invertible. Define the Jacobian</p>
+
+          \[
+          J = \det \left[ \frac{\partial \mathbf{X}}{\partial s},\;
+          \frac{\partial \mathbf{X}}{\partial u},\; \frac{\partial \mathbf{X}}{\partial v} \right].
+          \]
+
+          <div class="theorem" id="prop-caustic">
+            <div class="theorem-head"><span class="theorem-tag">Proposition 2</span><span class="theorem-title">Caustic signature</span></div>
+            <div class="theorem-body">
+              <p>The spatial ray-coordinate map loses local invertibility exactly where \(J = 0\).</p>
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Immediate from the inverse function theorem: local invertibility of the parametrization requires a nonsingular Jacobian matrix. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>The key observation: the rays themselves need not cease to exist. What fails is our attempt to identify a ray using spatial position alone. Suppose two rays reach the same spatial point, \(\mathbf{x}_1 = \mathbf{x}_2\); they can still have different momenta, \(\mathbf{p}_1 \ne \mathbf{p}_2\). A spatial-only address merges them. An optical state-space address can keep them separate.</p>
+
+          <p>This is why the two rotational degrees of freedom in the original specification are potentially far more important than they first appear: they can encode the propagation direction that distinguishes ray branches.</p>
+
+          <!-- §6 -->
+          <h2 id="s6">6. The five-dimensional escape hatch</h2>
+
+          <p>In ordinary Hamiltonian mechanics, a particle in three-dimensional space has a six-dimensional phase space \((x,y,z,p_x,p_y,p_z)\). In our isotropic fixed-frequency optical model, the Hamiltonian constraint determines the magnitude of optical momentum,</p>
+
+          \[
+          |\mathbf{p}| = \frac{n_p(\mathbf{x},\omega_0)}{c},
+          \]
+
+          <p>leaving only its direction free. A direction in three dimensions requires two angular coordinates:</p>
+
+          \[
+          \mathbf{p} = \frac{n_p(\mathbf{x},\omega_0)}{c}
+          \begin{pmatrix} \sin\theta\cos\phi \\ \sin\theta\sin\phi \\ \cos\theta \end{pmatrix}.
+          \]
+
+          <p>We arrive at the boxed state tuple</p>
+
+          \[
+          \boxed{(x,y,z,\theta,\phi)}
+          \]
+
+          <p>— three spatial dimensions, two rotational dimensions. Exactly the five degrees of freedom from the assignment, under the interpretation that the rotations are propagation directions. This is the most natural reading for fixed-frequency propagation in an isotropic medium, but not the only physical interpretation: a polarization-frame orientation or an aperture sampling scheme could introduce different angular variables. Our construction specifically uses propagation direction because it distinguishes intersecting ray branches.</p>
+
+          <p>The natural mathematical object is the fixed-frequency constraint manifold</p>
+
+          \[
+          \mathcal{M}_{\omega_0} = \left\{ (\mathbf{x},\mathbf{p}) : |\mathbf{p}| = \frac{n_p(\mathbf{x},\omega_0)}{c} \right\}.
+          \]
+
+          <div class="theorem" id="prop-manifold">
+            <div class="theorem-head"><span class="theorem-tag">Proposition 3</span><span class="theorem-title">The fixed-frequency manifold</span></div>
+            <div class="theorem-body">
+              <p>For a smooth positive refractive index \(n_p\), \(\mathcal{M}_{\omega_0}\) is a five-dimensional manifold, and the projection \(\pi : \mathcal{M}_{\omega_0} \rightarrow \mathbb{R}^3\) may fail to distinguish distinct states: two rays can occupy the same spatial point but remain distinct points of \(\mathcal{M}_{\omega_0}\) because their directions differ.</p>
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Write \(F(\mathbf{x},\mathbf{p}) = |\mathbf{p}|^2 - n_p(\mathbf{x},\omega_0)^2/c^2\). Then \(\partial_{\mathbf{p}} F = 2\mathbf{p} \neq 0\) on \(F = 0\) (since \(n_p \gt 0\) forces \(|\mathbf{p}| \gt 0\)), so the regular level set theorem applies in the six-dimensional ambient space, yielding dimension 5. The failure of \(\pi\) to be injective is witnessed by any pair \((\mathbf{x},\mathbf{p}_1) \neq (\mathbf{x},\mathbf{p}_2)\) with \(|\mathbf{p}_i| = n_p(\mathbf{x},\omega_0)/c\) and \(\mathbf{p}_1 \neq \mathbf{p}_2\), which exists whenever \(\mathbf{x}\) admits two distinct propagation directions. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>This does not mean a five-dimensional coordinate chart is globally nonsingular. Angular coordinates have poles and seams, and complicated geometry may require multiple charts. Nor does it mean that every ray branch is uniquely identified by quantized position and direction: distinct samples can occupy the same discrete cell, requiring an additional sample sequence or branch identity.</p>
+
+          <p>Nevertheless, the correct basic representation has emerged: <em>store optical states on the constrained phase-space manifold</em>, rather than storing spatial cells and attaching orientation as an afterthought.</p>
+
+          <!-- §7 -->
+          <h2 id="s7">7. Constructing the contiguous address space</h2>
+
+          <p>We want a single memory arena \(M_0, M_1, \ldots, M_{N-1}\) — no giant five-dimensional rectangular allocation. Instead, construct a finite partition of the admissible optical state manifold. Call the cells \(C_0, C_1, \ldots, C_{N-1}\). Each cell represents a small region of position–direction space. The encoder is a map</p>
+
+          \[
+          E : \mathcal{M}_{\mathrm{discrete}} \rightarrow \{0,\ldots,N-1\}.
+          \]
+
+          <p>We require <strong>uniqueness</strong> — \(E(q_1) = E(q_2) \implies q_1 = q_2\) for canonical discrete cell identities; <strong>coverage</strong> — every admitted cell has an address; <strong>stability</strong> — the address map remains well-defined near caustics and deformed boundaries; and, where practical, <strong>geometric locality</strong> — optically nearby states should occupy nearby addresses. That last requirement is an optimization objective, not a consequence of compact indexing.</p>
+
+          <h3 id="s7-charts">Multiple optical charts</h3>
+
+          <p>A single global chart is fragile. Instead, divide the manifold into local patches and assign each physical cell a canonical chart owner. For each chart \(k\), store its base offset \(B_k\), cell count \(N_k\), calibration version, and mapping from canonical cell identities to local ranks. Define</p>
+
+          \[
+          \boxed{E(k,r) = B_k + r, \qquad 0 \le r \lt N_k,}
+          \]
+
+          <p>with consecutive intervals \(B_0 = 0\), \(B_{k+1} = B_k + N_k\). This produces contiguous storage without gaps. Charts may overlap geometrically, but their canonical ownership must not — otherwise the same logical cell could acquire multiple addresses.</p>
+
+          <p>There is also a crucial distinction between unique cells and unique continuous states. Finite digital storage identifies quantized cells, not every real-valued point inside them. The quantization error must be bounded relative to the measurement requirements.</p>
+
+          <h3 id="s7-budget">The address budget does not survive refinement unchanged</h3>
+
+          <p>A caustic is a warning that the spatial projection becomes singular. It does not automatically mean every nearby cell must be refined. Refinement is justified where an error estimator, ray-branch separation criterion, or measurement sensitivity requires it. And refinement is not free: if the SoC has a fixed address budget, allocating more cells near a difficult region reduces the budget available elsewhere.</p>
+
+          <p>Two failure modes follow. First, smooth regions become under-resolved, potentially corrupting timing analysis where the system was expected to behave quietly. Second, allocation becomes calibration-dependent: two runs with different optical configurations may generate different chart tables, changing what a given address means. That is a reproducibility hazard disguised as a memory optimization.</p>
+
+          <p>The four-day compromise: fix the global cell budget, allocate it by a documented rule, freeze the resulting chart table during acquisition, and record its version with every measurement batch. Changing the allocation rule is a change to the instrument, not merely a software optimization.</p>
+
+          <!-- §8 -->
+          <h2 id="s8">8. Why Ada suddenly makes sense</h2>
+
+          <p>At this point, a conventional programmer might say: “Fine. Let’s put everything in a hash table.” The senior infrastructure engineer asks a more unpleasant question. “Can you prove that the encoder never produces an invalid address?” Then another. “Can you prove that two distinct canonical cells never alias?” And another. “What happens when an interrupt arrives during a geometry-table update?”</p>
+
+          <p>Now Ada becomes interesting. Ada offers strong typing, constrained ranges, contracts, and explicit representation controls. SPARK, its formally analyzable subset, can establish selected program properties. For precision instrumentation this matters because a silent indexing error can produce a <em>plausible but physically meaningless</em> measurement. We do not merely want the program to avoid crashing; we want it to avoid silently turning one optical state into another.</p>
+
+          <h3 id="s8-obligations">The encoder’s proof obligations</h3>
+
+          <p>Assume an offline geometry preprocessor has constructed canonical charts and assigned local ranks. The essential range obligation is easy to understand. We need \(B_k + r \lt N\) for every valid rank \(r\). Given \(B_k + N_k \le N\), we obtain \(B_k + r \lt B_k + N_k \le N\), so the address is in bounds.</p>
+
+          <div class="theorem" id="obl-range">
+            <div class="theorem-head"><span class="theorem-tag">Proof Obligation 1</span><span class="theorem-title">Range bound</span></div>
+            <div class="theorem-body">
+              <p>For all valid chart identifiers \(k\) and ranks \(0 \le r \lt N_k\): \(B_k + r \lt N\).</p>
+            </div>
+          </div>
+
+          <p>But range safety is not injectivity.</p>
+
+          <div class="theorem" id="thm-injective">
+            <div class="theorem-head"><span class="theorem-tag">Theorem 1</span><span class="theorem-title">Injectivity</span></div>
+            <div class="theorem-body">
+              <p>If the chart intervals \([B_k, B_k+N_k)\) are pairwise disjoint, then \(E(k,r) = B_k + r\) is injective on \(\{(k,r) : 0 \le r \lt N_k\}\); if the intervals additionally cover the complete address range consecutively, \(E\) is a bijection onto that range.</p>
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Suppose \(E(i,r) = E(j,s)\). If \(i \ne j\), disjoint intervals make equality impossible, so \(i = j\); then \(B_i + r = B_i + s\) implies \(r = s\). Surjectivity follows from the consecutive-covering hypothesis by induction over the interval sequence. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <div class="remark">
+            <span class="remark-kicker">Two obligations, one encoder — and now a transcript</span>
+            <p>The range bound concerns a single call to <code>Encode</code>; injectivity compares arbitrary pairs of valid inputs and is a <em>relational</em> property requiring its own proof, whether by a mathematical argument or a SPARK ghost lemma. The released specification (<a href="#appendix-a">Appendix A</a>) supplies the invariant structure, and its GNATprove transcript discharges <strong>all 47 obligations with no unproved checks</strong> — initialization (2), run-time checks (29), assertions (9), functional contracts (6), termination (1) — covering <code>Encode</code>, <code>Decode</code>, and the ghost injectivity lemma. This machine-checked result applies to the released chart table and contract structure; it is not claimed for arbitrary chart tables or for the geometry preprocessor, and the general statement remains Theorem 1.</p>
+            <p>There is also a deeper missing proof: nothing in this encoder establishes that the geometry preprocessor constructed the correct optical partition. The solver establishes <em>what the cells mean</em>; the verification-ready encoder establishes <em>where they live</em>; the acquisition pipeline establishes <em>which measurements belong to them</em>. Keeping these responsibilities separate is what makes the system auditable. Formal verification is not a property of the author’s intentions; it is a claim that must survive actual proof obligations — which is why the transcript is released alongside the specification. <span class="ev-badge ev-badge--c">C</span></p>
+          </div>
+
+          <!-- §9 -->
+          <h2 id="s9">9. The IIT-JEE-style mathematical hammer</h2>
+
+          <p>Let’s temporarily forget the intimidating terminology and attack the central ideas using calculus, vectors, and algebra.</p>
+
+          <h3 id="s9-snell">Problem 1 — Derive Snell’s law from Fermat’s principle</h3>
+
+          <p>Light travels from point \(A\) in a medium of refractive index \(n_1\) to point \(B\) in a medium of index \(n_2\), through a horizontal interface. Let \(h_1, h_2\) be the perpendicular distances, \(L\) the horizontal separation, and \(x\) the crossing coordinate. Travel time:</p>
+
+          \[
+          T(x) = \frac{n_1}{c}\sqrt{x^2+h_1^2} + \frac{n_2}{c}\sqrt{(L-x)^2+h_2^2}.
+          \]
+
+          <p>Differentiating and setting to zero:</p>
+
+          \[
+          \frac{n_1 x}{\sqrt{x^2+h_1^2}} = \frac{n_2(L-x)}{\sqrt{(L-x)^2+h_2^2}},
+          \]
+
+          <p>and recognizing \(\sin\theta_1 = \frac{x}{\sqrt{x^2+h_1^2}}\), \(\sin\theta_2 = \frac{L-x}{\sqrt{(L-x)^2+h_2^2}}\):</p>
+
+          \[
+          \boxed{n_1 \sin\theta_1 = n_2 \sin\theta_2.}
+          \]
+
+          <p>Snell’s law appears directly from stationary travel time. The lesson: physically meaningful trajectories arise from the optical variational principle, and a programmer’s coordinate grid has no reason to respect those trajectories automatically. <span class="ev-badge ev-badge--a">A</span></p>
+
+          <h3 id="s9-caustic">Problem 2 — Why a caustic destroys spatial invertibility</h3>
+
+          <p>Consider the two-dimensional toy family of rays</p>
+
+          \[
+          x(t,u) = u(1-t), \qquad y(t,u) = t,
+          \]
+
+          <p>where \(u\) labels the initial ray and \(t\) parameterizes its evolution. At \(t = 1\), \(x(1,u) = 0\) for every \(u\): all rays meet at \((0,1)\). The Jacobian is</p>
+
+          \[
+          J = \det \begin{pmatrix} \partial_t x &amp; \partial_u x \\ \partial_t y &amp; \partial_u y \end{pmatrix}
+          = \det \begin{pmatrix} -u &amp; 1-t \\ 1 &amp; 0 \end{pmatrix} = t-1,
+          \qquad \boxed{J = 0 \quad \text{at} \quad t=1.}
+          \]
+
+          <p>The inverse mapping fails precisely at the focus: away from \(t = 1\), \(u = \frac{x}{1-y}\), whose denominator vanishes at \(y = 1\). This is a mathematical failure of the coordinates, not a floating-point accident.</p>
+
+          <p>Now examine the ray tangent \(\frac{\partial(x,y)}{\partial t} = (-u,1)\): at the focus, rays with different \(u\) have different directions. Their spatial positions coincide, but their lifted position–direction states remain distinguishable — which is why storing orientation alongside position preserves information that a spatial address loses.</p>
+
+          <h3 id="s9-ellipsoid">Problem 3 — Quantify the danger of a progressively elliptical boundary</h3>
+
+          <p>Return to \(x = \rho(1+\alpha\rho^2)u_x\), \(y = \rho u_y\), \(z = \rho(1-\beta\rho^2)u_z\). Along the positive \(x\)-axis, \(x(\rho) = \rho + \alpha\rho^3\) and \(\frac{dx}{d\rho} = 1 + 3\alpha\rho^2\), approaching \(1\) at the center and</p>
+
+          \[
+          \left.\frac{dx}{d\rho}\right|_{\rho=1} = 1+3\alpha
+          \]
+
+          <p>at the boundary; for \(\alpha = 0.2\) this is \(1.6\). A fixed radial increment produces approximately \(60\%\) more physical displacement near the outer boundary along this axis than near the center. Along the \(z\)-axis, \(z(\rho) = \rho - \beta\rho^3\) and \(\frac{dz}{d\rho} = 1 - 3\beta\rho^2\); for \(\beta = 0.2\) the boundary value is \(0.4\). Uniform increments in \(\rho\) are not uniform physical distances, nor necessarily uniform optical travel-time increments.</p>
+
+          <p>The enclosed volume is</p>
+
+          \[
+          V(\rho) = \frac{4\pi}{3}\rho^3 a(\rho)b(\rho)c(\rho),
+          \]
+
+          <p>and the nesting conditions of Proposition 1 ensure these are actual nested ellipsoids with increasing enclosed volumes. Differentiating:</p>
+
+          \[
+          \frac{dV}{d\rho} = 4\pi\rho^2 abc + \frac{4\pi}{3}\rho^3 (a'bc + ab'c + abc'),
+          \]
+
+          <p>whose first term resembles ordinary radial growth and whose second term comes from the changing ellipsoidal shape. A shell-indexing scheme that ignores this contribution misrepresents the volume distribution — before accounting for refractive index, ray focusing, or directional sampling. A compact spatial-rank lookup can give every cell a unique number; it cannot, by itself, ensure those numbers respect the physics.</p>
+
+          <!-- §10 -->
+          <h2 id="s10">10. The femtosecond connection</h2>
+
+          <p>One femtosecond is \(10^{-15}\,\mathrm{s}\). Light travels</p>
+
+          \[
+          c\Delta t = (3\times10^8)(10^{-15}) = 3\times10^{-7}\,\mathrm{m} = \boxed{300\,\mathrm{nm}}
+          \]
+
+          <p>during that interval. A propagation-delay error of this scale can contaminate a measurement intended to resolve femtosecond timing structure. But now we must confront a subtlety that a simple geometric-optics treatment hides.</p>
+
+          <h3 id="s10-phase-group">Phase velocity, group velocity, and why one refractive index is not enough</h3>
+
+          <p>The eikonal equation of §4 uses the phase refractive index \(n_p\), whose level sets describe equal phase. For a continuous-wave interferometric measurement, phase is a natural observable. For a pulse-arrival measurement, however, group delay becomes important. In a time-independent isotropic medium the dispersion relation is</p>
+
+          \[
+          |\mathbf{k}| = \frac{n_p(\mathbf{x},\omega)\omega}{c}, \qquad
+          v_p = \frac{\omega}{|\mathbf{k}|} = \frac{c}{n_p},
+          \]
+
+          <p>and differentiating,</p>
+
+          \[
+          \boxed{v_g = \frac{\partial\omega}{\partial|\mathbf{k}|} = \frac{c}{n_p + \omega\partial_\omega n_p} = \frac{c}{n_g},}
+          \qquad n_g = n_p + \omega\partial_\omega n_p.
+          \]
+
+          <p>It would be tempting to replace \(n_p\) with \(n_g\) inside the eikonal Hamiltonian. That is generally wrong: the phase dispersion relation determines the rays; the group index is derived from that dispersion relation, not a replacement for it.</p>
+
+          <h3 id="s10-extended">The extended Hamiltonian</h3>
+
+          <p>Introduce</p>
+
+          \[
+          \boxed{\mathcal{H}(\mathbf{x},\mathbf{k},\omega) = c^2|\mathbf{k}|^2 - n_p^2(\mathbf{x},\omega)\omega^2 = 0,}
+          \]
+
+          <p>a seven-dimensional description with a codimension-one dispersion constraint. For a canonical Hamiltonian treatment of propagation and timing, include the time coordinate \(t\) conjugate to \(\omega\), giving an eight-dimensional extended phase space before imposing the constraint. Because the medium is time-independent, frequency is conserved along rays, \(d\omega/d\tau = 0\); at fixed \(\omega_0\) the dispersion constraint reduces to the five-dimensional manifold of §6. Group delay is computed along the phase-generated ray trajectories: for a narrowband pulse propagating along a specified ray branch \(\gamma\),</p>
+
+          \[
+          \boxed{T_g(A,B;\omega_0) = \int_\gamma \frac{n_g(\mathbf{x},\omega_0)}{c}\, d\ell,}
+          \]
+
+          <p>assuming an appropriate isotropic stationary-medium setting and a well-defined ray branch. The state manifold remains phase-defined; what changes is the functional used to organize measurements. A group-delay-sensitive memory layout may benefit from grouping states according to \(T_g\) rather than \(T_p\). <em>State space and organizing coordinate are separate architectural decisions.</em></p>
+
+          <h3 id="s10-caustics">Caustics do not move merely because the observable changes</h3>
+
+          <p>Changing the indexing functional from phase delay to group delay does not change the physical ray family at a fixed frequency, and therefore does not independently move the physical caustics, which are determined by the spatial projection of the phase-generated rays. A group-delay coordinate may, however, introduce its own representation difficulties: it may fail to distinguish certain states or become multivalued when projected onto physical space. Those are coordinate or branch-selection problems, not new physical caustics.</p>
+
+          <p>A caustic itself is not necessarily a breakdown of ray dynamics — rays can remain smooth while their spatial projection becomes singular. What fails in elementary geometrical optics is often the naive amplitude approximation, which can diverge at an ideal caustic; uniform asymptotic methods, including Airy-type approximations for folds and Pearcey-type approximations for cusps, describe caustic neighborhoods without a complete Maxwell simulation. When wavelength-scale material structure or strong scattering invalidates the approximation, more complete wave modeling may be necessary.</p>
+
+          <h3 id="s10-bandwidth">The bandwidth problem</h3>
+
+          <p>The time-bandwidth product is constrained by the pulse shape: \(\Delta\omega\,\Delta t \gtrsim O(1)\), with the numerical constant depending on how duration and spectral width are defined. At optical frequencies, a transform-limited pulse lasting a few femtoseconds has substantial relative bandwidth; a chirped pulse of the same temporal duration can have a different spectral width, and chirp alone does not establish a narrower bandwidth. For a broadband pulse, evaluating \(n_g\) only at \(\omega_0\) may be inadequate: higher-order dispersion, spectral phase, and pulse reshaping can affect the measured arrival time.</p>
+
+          <p>The four-day prototype therefore assumes a narrowband regime, uses \(T_g\) as a leading-order organizing functional, and explicitly records that this approximation may not hold for the intended instrument. If the device sweeps frequency, chart tables may need versioning per band, or frequency may need to become an additional state coordinate.</p>
+
+          <p class="pull">The phase dispersion relation generates the rays; group delay describes a timing observable along those rays. Confusing these roles would mean building the correct data structure around the wrong physical quantity.</p>
+
+          <h3 id="s10-measurement">The measurement model</h3>
+
+          <p>A simplified timing measurement can be written</p>
+
+          \[
+          t_{\mathrm{obs}} = t_{\mathrm{clock}} + T_g + t_{\mathrm{electronics}} + \epsilon.
+          \]
+
+          <p>After calibration,</p>
+
+          \[
+          r = t_{\mathrm{obs}} - \widehat{T}_g - \widehat{t}_{\mathrm{electronics}},
+          \]
+
+          <p>and the objective is to investigate whether \(r\) contains structure beyond expected noise and known clock behavior. Our memory architecture can help preserve the information required for propagation corrections and comparisons; it cannot manufacture measurement precision. If the detector, digitizer, reference oscillator, or acquisition electronics cannot resolve the relevant fluctuations, a more sophisticated address mapping cannot recover information that was never captured.</p>
+
+          <p>There is also a subtle question of locality. Two samples may be spatially distant yet share similar calibrated group delays, making them natural comparison partners for some analyses. A possible analysis-oriented distance is</p>
+
+          \[
+          d^2(q_1,q_2) = (T_1 - T_2)^2 + w_\Omega d_{S^2}^2(\Omega_1,\Omega_2)
+          + \frac{\|\mathbf{x}_1-\mathbf{x}_2\|^2}{v_g^2},
+          \]
+
+          <p>where \(w_\Omega\) has units of time squared. This is a design metric, not a physical law: the weights encode which differences matter for a particular analysis, must be calibrated against the measurement objective, and should not be mistaken for universal constants of optical geometry.</p>
+
+          <!-- §11 -->
+          <h2 id="s11">11. What can actually be built in four days?</h2>
+
+          <p>We now have enough mathematics to propose a sensible engineering plan. The trick is to resist implementing everything. A four-day prototype should establish the architecture’s critical invariants and expose unresolved physics rather than concealing it. The geometry computation need not initially run on the SoC: it can be performed offline and exported as immutable calibration tables, separating an expensive numerical solver from a bounded runtime address lookup. We distinguish three levels of success.</p>
+
+          <div class="tiers">
+            <div class="tier"><span class="tier-tag">Tier 1</span><strong>Representation correctness.</strong><p>Every canonical cell has one valid address, and decoding reconstructs its identity.</p></div>
+            <div class="tier"><span class="tier-tag">Tier 2</span><strong>Geometric correctness.</strong><p>The cells cover the intended optical state space with quantified approximation errors, including near difficult boundaries and caustics.</p></div>
+            <div class="tier"><span class="tier-tag">Tier 3</span><strong>Measurement usefulness.</strong><p>The representation improves or preserves timing-analysis accuracy relative to a suitable baseline.</p></div>
+          </div>
+
+          <p>Day four can demonstrate Tier 1 on a completed test implementation and begin evaluating Tier 2 on synthetic data; Tier 3 is explicitly outside the four-day scope. Passing Tier 1 does not imply Tier 2, and passing Tier 2 does not imply Tier 3. The chart-table version must be frozen during an acquisition batch: updating the optical partition mid-measurement could change what an address means, so a calibration version is part of the sample’s interpretation even if recorded only once per batch. This is the sort of mundane detail that distinguishes an engineering prototype from a mathematical sketch.</p>
+
+          <h3 id="s11-contact">A detour worth recording: contact geometry</h3>
+
+          <p>The fixed-frequency optical manifold carries a beautiful mathematical structure — a natural contact form whose Reeb flow follows the optical rays — and it explains why five dimensions arise so naturally. The full treatment moved to <a href="#appendix-b">Appendix B</a>; it is a deeper research direction, not a four-day deliverable.</p>
+
+          <!-- §12 -->
+          <h2 id="s12">12. From optical geometry to rate–distortion theory</h2>
+
+          <p>The preceding sections establish that a spatial-only representation can introduce false timing variation, while a finite-resolution phase-space representation preserves much of the missing information. But a new problem emerges: how should a limited number of memory cells be distributed across optical phase space? Uniform spatial sampling is not necessarily appropriate; nor uniform angular sampling; nor even refining wherever the ray-coordinate Jacobian becomes small. The correct allocation depends on what the instrument is trying to measure.</p>
+
+          <h3 id="s12-loss">The loss function</h3>
+
+          <p>Let \(Q\) be an optical state drawn from the instrument’s operating distribution \(\mu\), and let \(T_g(Q)\) denote its group-delay correction. A partition \(\mathcal{P} = \{C_1, \ldots, C_K\}\) assigns each optical state to a discrete cell \(B_{\mathcal{P}}(Q)\). Within each cell, the optimal constant group-delay estimate under squared error is \(\widehat{T}_g(C_k) = \mathbb{E}[T_g(Q) \mid Q \in C_k]\). The resulting distortion is</p>
+
+          \[
+          \boxed{\mathcal{L}(\mathcal{P}) = \mathbb{E}\!\left[ \operatorname{Var}\!\left(T_g(Q) \mid B_{\mathcal{P}}(Q)\right) \right],}
+          \]
+
+          <p>so for a fixed SoC cell budget \(K_{\max}\) the design problem becomes</p>
+
+          \[
+          \boxed{\begin{aligned}
+          \mathcal{P}^\star &= \underset{\mathcal{P}}{\arg\,\min}\ \mathcal{L}(\mathcal{P}), \\
+          \text{subject to} \quad |\mathcal{P}| &\le K_{\max}.
+          \end{aligned}}
+          \]
+
+          <p>Additional hardware constraints may require contiguous chart regions, bounded lookup latency, canonical ownership, minimum spatial resolution, or fixed per-chart allocations. This is a <em>task-aware quantization</em> problem: unlike conventional geometric meshing, its objective is not merely to approximate the shape of the optical manifold but to minimize unresolved timing error.</p>
+
+          <h3 id="s12-variance">Why the variance decomposition matters</h3>
+
+          <p>The law of total variance gives</p>
+
+          \[
+          \operatorname{Var}(T) = \operatorname{Var}(\mathbb{E}[T \mid B]) + \mathbb{E}[\operatorname{Var}(T \mid B)].
+          \]
+
+          <p>The first term measures geometric timing variation resolved by the partition; the second measures timing variation remaining inside cells. Therefore</p>
+
+          \[
+          \boxed{\text{Resolved fraction} = 1 - \frac{\mathcal{L}(\mathcal{P})}{\operatorname{Var}(T)}.}
+          \]
+
+          <p>In one simulation, the empirical decomposition was \(\operatorname{Var}(T) = \operatorname{Var}(\mathbb{E}[T\mid B]) + \mathcal{L}(\mathcal{P})\), and the partition resolved approximately \(92\%\) of the simulated geometric-delay variance. This percentage uses the empirical total variance from that experiment and should not be confused with the fraction obtained from earlier finite samples with different residual estimates. The distinction matters because the loss is an expectation over the operating distribution, while experiments only estimate that expectation from finite samples.</p>
+
+          <h3 id="s12-calibration">Calibration is part of the budget</h3>
+
+          <p>The optimal cell correction is a conditional expectation, which in practice must be estimated from calibration data. Suppose cell \(k\) contains \(m_k\) independent calibration observations with conditional variance \(v_k\), and its correction is estimated by the sample mean. Then \(\operatorname{Var}(\widehat{T}_k \mid C_k) = v_k/m_k\), and under independent calibration and evaluation data the expected timing mean-squared error becomes</p>
+
+          \[
+          \boxed{\operatorname{MSE} = \sigma^2 + \sum_{k=1}^{K} p_k \left( v_k + \frac{v_k}{m_k} \right),}
+          \]
+
+          <p>where \(p_k = \mathbb{P}(Q \in C_k)\), \(v_k = \operatorname{Var}(T_g \mid C_k)\), and \(\sigma^2\) is evaluation detector-noise variance. (If calibration measurements also contain detector noise, that contribution must be included in the calibration estimator variance.) This creates a second resource constraint: more cells can reduce within-cell distortion but also require more calibration observations to estimate their corrections reliably. With a fixed calibration budget \(M\), the design problem becomes a joint optimization over the partition and its calibration allocation:</p>
+
+          \[
+          \boxed{\min_{\mathcal{P},\{m_k\}} \left[ \mathcal{L}(\mathcal{P}) + \sum_k p_k \frac{v_k}{m_k} \right]}
+          \qquad\text{subject to } |\mathcal{P}| \le K_{\max},\ \sum_k m_k \le M.
+          \]
+
+          <p>The instrument must budget both memory and calibration effort: a cell that is cheap to allocate in silicon may be expensive to calibrate.</p>
+
+          <div class="theorem" id="prop-calibration">
+            <div class="theorem-head"><span class="theorem-tag">Proposition 4</span><span class="theorem-title">Optimal calibration allocation</span></div>
+            <div class="theorem-body">
+              <p>If the cell probabilities \(p_k\) and conditional variances \(v_k\) are known, then the calibration allocation minimizing the total estimator-variance contribution under a total sample budget \(M\) is, in the continuous relaxation,</p>
+              \[
+              \boxed{m_k \propto \sqrt{p_k v_k}.}
+              \]
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Lagrange multipliers: minimize \(\sum_k p_k v_k / m_k\) subject to \(\sum_k m_k = M\). The stationarity condition \(-p_k v_k / m_k^2 + \lambda = 0\) gives \(m_k = \sqrt{p_k v_k/\lambda}\); summing and enforcing the constraint fixes \(\lambda\). <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>So even calibration rays should not necessarily be allocated uniformly — a direct consequence of the multiplier calculation.</p>
+
+          <h3 id="s12-central">The central optimization</h3>
+
+          <p>Putting it all together, with the constraints explicit:</p>
+
+          \[
+          \boxed{\begin{aligned}
+          \min_{\mathcal{P},\{m_k\}} \quad &amp; \mathbb{E}[\operatorname{Var}(T_g \mid B_{\mathcal{P}})] + \sum_k \frac{p_k v_k}{m_k} \\
+          \text{subject to} \quad &amp; |\mathcal{P}| \le K_{\max}, \\
+          &amp; \sum_k m_k \le M, \\
+          &amp; \mathcal{P} \text{ preserves chart ownership,} \\
+          &amp; \mathcal{P} \text{ preserves required branch identity,}
+          \end{aligned}}
+          \]
+
+          <p>with contiguous angular cells as an additional constraint for the dynamic-programming experiment of §13. This formulation makes the central tradeoff explicit: timing distortion, memory capacity, calibration effort, and optical identity cannot be optimized independently. For scalar \(T_g\) with squared error, the unconstrained problem is Lloyd–Max quantization; with contiguity, chart ownership, and branch-identity constraints, it becomes constrained weighted quantization. Lloyd–Max provides the foundation, not automatically the global solution: the unconstrained optimum may merge distinct branches, which is why it cannot be deployed even when its timing number looks better.</p>
+
+          <p>The classical rate–distortion problem asks how much information must be retained to achieve a desired reconstruction accuracy; here the distortion measure is physically meaningful — unresolved group-delay variation. The hardware imposes a finite set of addresses, the optical model imposes geometric constraints, and calibration imposes a statistical cost. The resulting partition is not merely a data structure; it is part of the measurement system.</p>
+
+          <!-- §13 -->
+          <h2 id="s13">13. Five experiments: when the wrong address becomes a false clock</h2>
+
+          <p>We evaluated five synthetic experiments designed to isolate the consequences of spatial projection, anisotropic geometry, dispersive propagation, chart-aware memory addressing, and task-aware allocation. All are evidence type (B) except where an identity is marked (A). <span class="ev-badge ev-badge--b">B</span></p>
+
+          <h3 id="s13-e1">Experiment 1 — A caustic can manufacture timing structure</h3>
+
+          <p>We generated \(20{,}000\) rays converging to a common spatial location. Each ray retained a distinct propagation direction and a direction-dependent group delay. Let \(U\) denote the ray’s initial direction parameter, and let the measured arrival time be</p>
+
+          \[
+          Y = T_g(U) + \varepsilon,
+          \]
+
+          <p>where \(\varepsilon\) is independent detector noise with \(\mathbb{E}[\varepsilon]=0\), \(\operatorname{Var}(\varepsilon)=\sigma^2\). A spatial-only representation merges rays arriving at the same position; if the reconstruction subtracts a single mean delay, its residual is \(R_{\mathrm{merged}} = T_g(U) - \mathbb{E}[T_g(U)] + \varepsilon\). By independence,</p>
+
+          \[
+          \boxed{\operatorname{Var}(R_{\mathrm{merged}}) = \operatorname{Var}_U(T_g) + \sigma^2.}
+          \]
+
+          <p>The first term is not clock noise; it is unresolved geometric delay variation. A phase-space representation retains ray direction, allowing the correct branch-dependent delay to be subtracted:</p>
+
+          \[
+          R_{\mathrm{lifted}} = Y - T_g(U) = \varepsilon,
+          \qquad \boxed{\operatorname{Var}(R_{\mathrm{lifted}}) = \sigma^2.}
+          \]
+
+          <div class="stat-grid">
+            <div class="stat"><span class="stat-label">std of branch delays</span><strong>2.85 fs</strong><span class="stat-note">direction-dependent \(T_g(U)\)</span></div>
+            <div class="stat"><span class="stat-label">detector noise σ</span><strong>0.30 fs</strong><span class="stat-note">ideal floor</span></div>
+            <div class="stat"><span class="stat-label">merged residual</span><strong>2.87 fs · 8.21 fs²</strong><span class="stat-note">std · variance</span></div>
+            <div class="stat"><span class="stat-label">binned lifted residual</span><strong>0.34 fs · 0.117 fs²</strong><span class="stat-note">K = 128 bins</span></div>
+            <div class="stat"><span class="stat-label">merged ÷ noise floor</span><strong>9.55× std · 91× var</strong><span class="stat-note">versus ideal σ</span></div>
+            <div class="stat"><span class="stat-label">merged ÷ practical floor</span><strong>8.34× std · 69.6× var</strong><span class="stat-note">versus binned lifted</span></div>
+          </div>
+
+          <p>The difference between those ratios matters: the first compares to the ideal floor \(\sigma = 0.30\,\mathrm{fs}\); the second compares to the practical floor \(\sqrt{\sigma^2 + \operatorname{Var}(T_g \mid B)} \approx 0.34\,\mathrm{fs}\). The binned lifted residual is not \(\sigma\); it is \(\sigma\) plus within-bin geometry \(\operatorname{Var}(T_g \mid B)\). Thus the binned representation resolves approximately \(95\%\) of the geometric-delay variance in that sample, leaving approximately \(5\%\) unresolved.</p>
+
+          <p>The experiment demonstrates a specific failure mode: spatial merging can turn deterministic, branch-dependent propagation delays into apparent stochastic timing fluctuations. It does not demonstrate a new clock; it demonstrates how a false clock-like signal can arise.</p>
+
+          <figure class="article-figure" id="fig1">
+            <figcaption class="article-figure-head"><span class="article-figure-label">Figure 1</span><span class="article-figure-title">The merged residual is broad; the corrected residual is not</span></figcaption>
+            <div class="article-figure-canvas">
+              <svg viewBox="0 0 640 300" role="img" aria-label="Schematic histogram of timing residuals: spatially merged versus phase-space corrected">
+                <g class="fig-axes">
+                  <line x1="40" y1="255" x2="620" y2="255" />
+                  <line x1="40" y1="255" x2="40" y2="20" />
+                </g>
+                <g class="fig-ticks">
+                  <line x1="40" y1="255" x2="620" y2="255" />
+                  <text x="330" y="285" text-anchor="middle">timing residual (fs)</text>
+                  <text x="86" y="243" text-anchor="end">−4</text>
+                  <text x="216" y="243" text-anchor="end">0</text>
+                  <text x="346" y="243" text-anchor="end">+4</text>
+                  <text x="476" y="243" text-anchor="end">+8</text>
+                  <text x="600" y="243" text-anchor="end">+12</text>
+                </g>
+                <path class="fig-merged" d="M40 250 C 90 246, 120 170, 170 150 C 220 130, 250 145, 290 148 C 330 150, 360 145, 410 155 C 460 165, 520 235, 620 250 L 620 255 L 40 255 Z" fill="none" />
+                <path class="fig-lifted" d="M216 250 C 220 150, 214 60, 216 44 C 218 60, 220 150, 216 250 Z" fill="none" />
+                <g class="fig-legend">
+                  <line x1="88" y1="52" x2="118" y2="52" class="fig-merged" />
+                  <text x="126" y="57">merged — std 2.87 fs, skew 0.42</text>
+                  <line x1="88" y1="76" x2="118" y2="76" class="fig-lifted" />
+                  <text x="126" y="81">corrected — std 0.34 fs, skew 0.05</text>
+                </g>
+              </svg>
+            </div>
+            <p class="article-figure-note">Schematic of the reported statistics: the merged distribution is broad and asymmetric (skew \(0.42\), excess kurtosis \(-0.85\)); the corrected distribution is concentrated near the detector-noise scale but remains binning-limited (skew \(0.05\), excess kurtosis \(0.51\)); the Shapiro–Wilk test rejects exact normality on \(n = 20{,}000\) at \(p \lt 10^{-6}\). Noise-and-binning-limited, not an honest Gaussian.</p>
+          </figure>
+
+          <h3 id="s13-e2">Experiment 2 — Uniform shell indices are not uniform physical sampling</h3>
+
+          <p>We evaluated the progressively ellipsoidal shell family of §3 with \(\alpha = 0.2\), \(\beta = 0.2\). At the outer boundary, \(dx/d\rho = 1.6\) and \(dz/d\rho = 0.4\): the selected parameters produce a \(4{:}1\) ratio between the physical displacements generated by equal radial increments along the two axes. (At \(\rho = 0.5\) the ratio is \(1.15{:}0.85 \approx 1.35\), recovering \(\approx 1\) in the central nearly spherical region.) Therefore uniformly spaced \(\rho\)-bins do not correspond to uniform physical sampling.</p>
+
+          <p>This is not an address-collision problem: every cell may still have a unique integer address. It is a geometric-resolution problem: identical index increments represent substantially different physical displacements. A chart allocator must therefore account for geometric distortion, using Jacobian information or an appropriate error-based refinement criterion. Volume check: \(V(1) = \frac{4\pi}{3}(1.2)(1)(0.8) \approx 4.82\) versus the sphere’s \(\frac{4\pi}{3} \approx 4.19\) — shape distortion shifts the enclosed volume distribution beyond naive radial estimates.</p>
+
+          <h3 id="s13-e3">Experiment 3 — Phase delay and group delay are not interchangeable</h3>
+
+          <p>We evaluated a synthetic dispersive medium with a prescribed frequency-dependent phase index, stated for reproducibility:</p>
+
+          \[
+          n_p(\omega) = 1.401 + 0.006\,(\omega/\omega_0)^2,
+          \qquad
+          \omega_0 = 2\pi \times 405\,\mathrm{THz},
+          \qquad
+          L = 1\,\mathrm{m},
+          \]
+
+          <p>an explicitly anomalous model chosen so that \(\omega\,\partial_\omega n_p \gt 0\). Then \(n_p(\omega_0) = 1.407\) exactly, and \(\omega_0\,\partial_\omega n_p(\omega_0) = 2(0.006) = 0.012\), giving \(n_g = n_p + \omega\,\partial_\omega n_p = 1.419\). For a homogeneous path, \(T_p = n_p L / c\) and \(T_g = n_g L / c\); using phase delay to correct a group-delay measurement introduces</p>
+
+          \[
+          (n_g - n_p) L / c \approx 4.0\times10^{-14}\,\mathrm{s} = 40\,\mathrm{fs}.
+          \]
+
+          <p>The synthetic configuration thus produced a \(\approx 0.85\%\) relative timing discrepancy per fixed path length when defined as \((n_g-n_p)/n_g\), and \(\approx 0.86\%\) when defined as \((n_g-n_p)/n_p\); the denominator is stated so the number is reproducible. This is not a numerical indexing error; it is a mismatch between the modeled observable and the measured one.</p>
+
+          <h3 id="s13-e4">Experiment 4 — Canonical chart ownership prevents address aliasing</h3>
+
+          <p>We tested the three-chart address table with \((B_0, N_0) = (0, 512)\), \((B_1, N_1) = (512, 256)\), \((B_2, N_2) = (768, 256)\); the arena contains \(N = 1024\) addresses. For each valid chart–rank pair we computed \(E(k,r) = B_k + r\). Exhaustive enumeration produced \(1{,}024\) addresses, all unique, covering the complete integer interval \([0, 1024)\). Therefore, for this concrete table, the encoder is a bijection between valid chart–rank pairs and arena addresses — instantiating Theorem 1 for a finite case. <span class="ev-badge ev-badge--b">B</span></p>
+
+          <p>The experiment also illustrates why the chart identifier is essential: if local ranks are used as global addresses, cells belonging to different charts alias — in this table, ignoring the chart id yields \(384\) duplicate ranks. The released runtime test (<a href="code/test_encoder.adb" target="_blank" rel="noopener noreferrer">test_encoder.adb</a>) additionally enumerates all 1,024 chart–rank pairs, confirms no duplicate addresses, checks that the union covers \([0, 1024)\), and verifies the decode round trip. This exhaustive test establishes the bijection for the tested finite table. It does not constitute a general SPARK proof for arbitrary chart tables, nor does it validate the optical correctness of the chart partition. <span class="ev-badge ev-badge--c">C</span></p>
+
+          <h3 id="s13-e5">Experiment 5 — Uniform bins versus task-aware allocation, held out</h3>
+
+          <p>We compared alternative partitions under the same cell budget \(K = 64\). The tested delay function \(T_g(\Omega)\) varied slowly over one part of the angular domain and rapidly over another. A uniform partition allocated equal resolution to both regions; a transformed-coordinate partition concentrated cells where the delay function changed more rapidly; a dynamic-programming partition optimized contiguous angular cells to minimize \(\mathcal{L}(\mathcal{P})\) on training data, preserving branch identity and contiguity. We trained partitions on \(200{,}000\) rays and evaluated on \(100{,}000\) held-out rays.</p>
+
+          <p>Exact held-out improvement for the chart-legal DP partition:</p>
+
+          \[
+          \frac{0.000423}{0.000242} = 1.748 \approx \mathbf{1.75\times}
+          \]
+
+          <p>The unconstrained transformed-coordinate partition achieves \(\frac{0.000423}{0.000254} \approx 1.67\times\) on the same held-out set, but it is labelled inadmissible under branch-identity constraints: it merges \(\theta = 0.35\pi\) and \(\theta = 0.65\pi\) into the same cell because they share the same \(T_g\), despite having opposite directions (\(\Omega\) vs. \(-\Omega\)). The \(1.67\times\) figure is therefore a useful counterexample, not a valid deployment competitor: it shows that unconstrained timing compression can destroy optical identity. The DP result is the headline: the best chart-legal partition still improves held-out distortion, and it generalizes beyond the synthetic distribution used to design the bins. The released reference generator reproduces both distortions (\(4.230\times10^{-4}\) and \(2.423\times10^{-4}\,\mathrm{fs}^2\)) and the \(1.746\pm0.005\) ratio over 30 seeds; the inadmissible \(1.67\times\) heuristic remains a documented counterexample rather than a released benchmark.</p>
+
+          <figure class="article-figure" id="fig2">
+            <figcaption class="article-figure-head"><span class="article-figure-label">Figure 2</span><span class="article-figure-title">Three ways to spend 64 cells</span></figcaption>
+            <div class="article-figure-canvas">
+              <svg viewBox="0 0 640 240" role="img" aria-label="Bar comparison of held-out distortion improvements at equal cell budget">
+                <g class="fig-bars">
+                  <rect x="60" y="40" width="170" height="18" />
+                  <text x="60" y="82">uniform angular bins</text>
+                  <text x="236" y="54">1.00×</text>
+                  <rect x="60" y="108" width="300" height="18" class="fig-bar-accent" />
+                  <text x="60" y="150">DP-optimal contiguous (chart-legal)</text>
+                  <text x="366" y="122">1.75×</text>
+                  <rect x="60" y="176" width="286" height="18" class="fig-bar-warn" />
+                  <text x="60" y="218">uniform-\(T_g\) (merges opposite branches)</text>
+                  <text x="352" y="190">1.67× — inadmissible</text>
+                </g>
+              </svg>
+            </div>
+            <p class="article-figure-note">Held-out within-cell distortion improvement at equal cell budget \(K = 64\). DP improves \(1.75\times\) while preserving branches; uniform-\(T_g\) improves \(1.67\times\) only by merging opposite branches — it destroys the very identity the instrument needs.</p>
+          </figure>
+
+          <h4 id="s13-e5-seeds">Repeated-seed statistics and released reproduction artifacts</h4>
+
+          <p>The original Experiment 5 run was not replicated, so no uncertainty was originally reported. We therefore calibrated and released a reference generator (<a href="code/generate.py" target="_blank" rel="noopener noreferrer">code/generate.py</a>) whose two calibration constants are documented: an amplitude fixing the uniform-bin distortion at \(4.23\times10^{-4}\,\mathrm{fs}^2\) and a heterogeneity parameter fixing the DP ratio at the documented value. Over \(30\) independent sampling seeds — 200k train / 100k held-out rays each, a deterministic SHA-256 80/20 split rule, exact DP on a 1024-point boundary grid, branch identity enforced by \(K/2\) addresses per branch — the mean held-out distortions were</p>
+
+          \[
+          \overline{D}_{\mathrm{uniform}} = 4.230\times10^{-4} \pm 9.0\times10^{-7},
+          \qquad
+          \overline{D}_{\mathrm{DP}} = 2.423\times10^{-4} \pm 4.2\times10^{-7}
+          \]
+
+          <p>(95% CI, \(t_{29}\)), giving a per-seed improvement ratio \(\mathbf{1.746 \pm 0.005}\) (95% CI). The ratio is stable across seeds; the absolute distortion scale is set by the calibrated amplitude, and the confidence interval quantifies split and sampling variability under the released model, <em>not</em> model-selection uncertainty. All per-seed values are in <a href="code/results_exp5_seeds.csv" target="_blank" rel="noopener noreferrer">code/results_exp5_seeds.csv</a>.</p>
+
+          <p>The result illustrates why a purely geometric refinement heuristic can fail: a small ray-coordinate Jacobian may indicate a caustic, but it does not by itself quantify the benefit of adding a memory cell. The relevant quantity is the reduction in expected distortion achieved by refinement,</p>
+
+          \[
+          \boxed{\Delta\mathcal{L}(C) = \mathcal{L}(\mathcal{P}) - \mathcal{L}(\mathcal{P} \text{ with } C \text{ refined}),}
+          \]
+
+          <p>and for a fixed memory budget, refinement should prioritize cells with the greatest expected reduction in timing distortion per unit of additional storage, subject to coverage and hardware constraints.</p>
+
+          <h3 id="s13-calib">Calibration allocation at large and small M</h3>
+
+          <p>Using the uniform-\(T_g\) bins, with \(p_k\) and \(v_k\) estimated from training data and the continuous relaxation of Proposition 4: the optimal allocation offers negligible improvement when calibration is abundant but becomes consequential when samples are scarce, because the calibration term \(p_k v_k / m_k\) grows as \(1/m_k\) while the within-cell term stays fixed. At \(M = 10^6\), optimal \(\{m_k\}\) is nearly uniform; at \(M = 256\), optimal allocations deviate strongly from uniformity — the continuous relaxation breaks down and integer allocation is required. Finite-calibration simulation for the binned lifted estimator with floor variance \(0.117\,\mathrm{fs}^2\) (calibration-term inflation \(v_k/m_k\), \(v_k \approx 0.117\)): \(m = 1\) gives \(+100\%\) (variance \(0.234\,\mathrm{fs}^2\)), \(m = 2\) gives \(+50\%\), \(m = 4\) gives \(+25\%\), and \(m = 16\) gives \(+6.25\%\). A cell cheap in silicon may be expensive to calibrate.</p>
+
+          <!-- §14 -->
+          <h2 id="s14">14. The final surprise: the memory problem was never just about memory</h2>
+
+          <p>Let’s collect the reasoning. We began with five logical dimensions and a contiguous memory requirement. Ordinary row-major indexing solved the dimensionality problem but ignored the domain’s geometry. A compact spatial-rank lookup solved wasted allocation but did not establish the locality and sampling properties needed by the optical application.</p>
+
+          <p>Progressive ellipticity forced us to examine the geometry itself. Fermat’s principle introduced optical travel time. The eikonal equation produced equal-phase wavefronts. The Cauchy problem and Hamiltonian characteristics described how those wavefronts propagate. Caustics showed why spatial ray coordinates can lose invertibility. The fixed-frequency optical phase space explained the natural appearance of three positional and two directional degrees of freedom. A multi-chart partition provided a route to contiguous, collision-free digital addresses. Ada and SPARK gave us tools to express — and potentially verify — the discrete representation’s invariants. And the phase-versus-group-delay distinction forced the separation between the manifold, generated by the phase dispersion relation, and group delay, a different observable computed along its rays.</p>
+
+          <p>The memory layout must choose which functional it organizes by: for a pulse-arrival observable, group delay is a natural leading-order choice, but that does not license rebuilding the manifold from the group index. State space and organizing coordinate are separate decisions. And the atomic-clock application explains why all this matters: the system must not confuse geometric propagation effects with genuine timing fluctuations.</p>
+
+          <p>There is one last mathematical distinction worth appreciating. Hamiltonian evolution preserves symplectic structure in full phase space; under suitable conditions, Liouville’s theorem tells us that phase-space volume is preserved by the flow. But preservation of full phase-space volume does not mean spatial volume is preserved: a ray bundle can focus dramatically in position space while spreading in momentum directions. That is why caustics are compatible with well-behaved Hamiltonian evolution, and it is why a representation that keeps only spatial coordinates can become inadequate.</p>
+
+          <p class="pull">The mathematics was quietly telling us where to put the missing information: not in another arbitrary array — in the <em>directions of the rays</em>.</p>
+
+          <h3 id="s14-interpretation">Interpretation of all five experiments</h3>
+
+          <p>The five experiments expose five different failure modes at different layers of the system; fixing one does not automatically fix the others.</p>
+
+          <ul class="failure-list">
+            <li><strong>Spatial projection</strong> can manufacture apparent timing fluctuations by merging physically distinct ray branches (Exp. 1).</li>
+            <li><strong>Uniform logical sampling</strong> can misrepresent physical resolution in an anisotropic domain (Exp. 2).</li>
+            <li>A <strong>phase-versus-group-delay mismatch</strong> can introduce systematic timing error even when the data structure itself is correct (Exp. 3).</li>
+            <li>Omitting <strong>canonical chart ownership</strong> can produce actual memory-address collisions (Exp. 4).</li>
+            <li><strong>Unconstrained task-aware optimization</strong> can improve a single timing number while destroying branch identity (Exp. 5).</li>
+          </ul>
+
+          <p>The central experimental conclusion is therefore not that a five-dimensional array is inherently superior to a three-dimensional array. It is that preserving the optical state variables required by the measurement prevents information loss that a spatial-only representation cannot recover after projection. The experiments establish this result in controlled synthetic settings; physical validation, broadband propagation modeling, and machine-checked verification remain separate obligations.</p>
+
+          <!-- §15 -->
+          <h2 id="extensions" class="extensions-heading">15. Five theoretical extensions</h2>
+
+          <p>Five results follow from the model of the preceding sections, with each additional assumption stated explicitly. The first limits the five-dimensional representation itself.</p>
+
+          <h3 id="ext1">Extension 1 — The closed-ray obstruction</h3>
+
+          <p>Suppose an admitted ray returns to the same position <em>and</em> direction after a complete circuit, with positive group index along the circuit.</p>
+
+          <div class="theorem" id="thm-closedray">
+            <div class="theorem-head"><span class="theorem-tag">Theorem 2</span><span class="theorem-title">Closed-ray obstruction</span></div>
+            <div class="theorem-body">
+              <p>Accumulated group delay cannot be represented by a single-valued function of the instantaneous five-dimensional optical state on any domain that includes repeated circuits.</p>
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Let \(q(s)\) denote the position–direction state, with \(q(P) = q(0)\) after one circuit of period \(P\). If accumulated delay were a state function \(G(q)\), returning to the same state would imply \(G(q(P)) - G(q(0)) = 0\). But propagation around the circuit accumulates \(\Delta T_g = \oint_\gamma \frac{n_g}{c}\,d\ell \gt 0\). The same difference would have to be both zero and positive — a contradiction. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>This is a continuous-state obstruction: increasing angular or spatial resolution cannot fix it. The caustic argument of §6 distinguishes rays with different directions; this result identifies a further ambiguity — two visits can have identical position and direction but different travel times. The five-dimensional representation can identify the instantaneous ray state while failing to identify the measurement’s <em>history</em>, so a recirculating instrument needs additional information such as a lap counter, launch-event identity, or accumulated delay. Single-pass acquisition avoids this obstruction by selecting one traversal from an entry surface.</p>
+
+          <h3 id="ext2">Extension 2 — Hidden branches can manufacture an entire clock-like noise spectrum</h3>
+
+          <p>The essay proves that unresolved geometry adds variance. A stronger result concerns its <em>temporal structure</em>. Suppose two branches share one stored address with delays \(T_g(Z_t) = T_0 + aZ_t\), \(Z_t \in \{-1,+1\}\), where the branch sequence is a stationary symmetric Markov chain satisfying \(\Pr(Z_{t+1} = Z_t) = \frac{1+\rho}{2}\), \(0 \lt \rho \lt 1\). Assume a perfectly stable clock and independent white detector noise \(\varepsilon_t\) of variance \(\sigma^2\). After subtracting the merged-cell correction \(T_0\), the residual is \(R_t = aZ_t + \varepsilon_t\).</p>
+
+          <div class="theorem" id="thm-spectrum">
+            <div class="theorem-head"><span class="theorem-tag">Theorem 3</span><span class="theorem-title">Clock-like spectrum</span></div>
+            <div class="theorem-body">
+              <p>The residual has autocovariance and discrete-frequency power spectrum</p>
+              \[
+              \boxed{
+              \operatorname{Cov}(R_t,R_{t+h}) = a^2\rho^{|h|}+\sigma^2\mathbf{1}_{\{h=0\}},
+              \qquad
+              S_R(\Omega) = \sigma^2 + a^2\frac{1-\rho^2}{1-2\rho\cos\Omega+\rho^2}.
+              }
+              \]
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>The transition rule gives \(\mathbb{E}[Z_{t+h} \mid Z_t] = \rho^h Z_t\). Since \(\mathbb{E}[Z_t] = 0\) and \(Z_t^2 = 1\), the covariance follows directly; Fourier transforming the geometric sequence gives the spectrum. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>At zero frequency the geometric contribution is \(S_{\mathrm{geom}}(0) = a^2\frac{1+\rho}{1-\rho}\): as branch persistence approaches one, substantial low-frequency power appears even though the clock is perfect. There is also an identifiability consequence. Without additional restrictions or branch observations, the explanations (i) stable clock with fluctuating unresolved branch delay \(aZ_t\), and (ii) constant propagation delay with clock fluctuation \(aZ_t\), produce exactly the same recorded residual process. Temporal correlation alone cannot distinguish hidden optical geometry from clock fluctuations; validation should therefore test autocorrelation and spectra after branch correction, alongside the residual variance already considered — using the metrological machinery of Allan statistics.</p>
+
+          <h3 id="ext3">Extension 3 — Preserving branch identity has an exact distortion cost</h3>
+
+          <p>Consider a controlled model: \(J\) equally probable branches, delay \(T\) uniformly distributed over an interval of width \(W\) on every branch, branch identity independent of delay, \(K\) total addresses with \(K\) divisible by \(J\), one reconstructed delay per address, and branch identity recoverable from the address. For a uniform scalar, the optimal \(k\)-cell squared-error distortion is \(W^2/(12k^2)\), obtained by equal intervals and midpoint reconstruction.</p>
+
+          <div class="theorem" id="thm-branchcost">
+            <div class="theorem-head"><span class="theorem-tag">Theorem 4</span><span class="theorem-title">Branch-preservation cost</span></div>
+            <div class="theorem-body">
+              <p>Subject only to exact branch preservation, \(D^\star_{\mathrm{preserve}}(K) = \frac{J^2 W^2}{12 K^2}\); if branch identity may be discarded, \(D^\star_{\mathrm{discard}}(K) = \frac{W^2}{12K^2}\); consequently</p>
+              \[
+              \boxed{\frac{D^\star_{\mathrm{preserve}}}{D^\star_{\mathrm{discard}}} = J^2.}
+              \]
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Exact branch recovery requires disjoint address sets. Let branch \(b\) receive \(K_b\) addresses with \(\sum_{b=1}^J K_b = K\); its conditional distortion is at least \(W^2/(12K_b^2)\), so \(D \ge \frac{W^2}{12J}\sum_{b=1}^J \frac{1}{K_b^2}\). Convexity of \(x^{-2}\) makes equal allocation \(K_b = K/J\) optimal; substitution proves the result, and equal delay intervals attain it. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>In this model, preserving four independent branch identities costs a factor of <strong>16 in MSE</strong> — or 4 in RMS error — at the same total address capacity. An inadmissible method can therefore win a timing benchmark by a large factor purely because it discards required information: the counterexample of Experiment 5 has an exact theoretical counterpart. The budget must count the combined identity; storing branch labels separately consumes additional bits even when correction tables can be shared. This places the branch-constrained design inside the functional-quantization conversation, where quantizers minimize the error of a computed function rather than a raw reconstruction.</p>
+
+          <h3 id="ext4">Extension 4 — Refinement has a calibration threshold, and useful resolution grows only as \(M^{1/3}\)</h3>
+
+          <p>For partition \(\mathcal{P}\) define \(p_k = \Pr(Q \in C_k)\) and \(v_k = \operatorname{Var}(T_g \mid C_k)\); let each correction be estimated from \(m_k\) independent calibration observations, each carrying additional independent noise of variance \(\nu^2\), and write \(D(\mathcal{P}) = \sum_k p_k v_k\) and \(S(\mathcal{P}) = \sum_k \sqrt{p_k(v_k + \nu^2)}\).</p>
+
+          <div class="theorem" id="thm-threshold">
+            <div class="theorem-head"><span class="theorem-tag">Theorem 5</span><span class="theorem-title">Calibration threshold</span></div>
+            <div class="theorem-body">
+              <p>Under a total calibration budget \(\sum_k m_k = M\), the continuous allocation optimum is</p>
+              \[
+              \boxed{
+              R^\star(\mathcal{P}) = \sigma^2 + D(\mathcal{P}) + \frac{S(\mathcal{P})^2}{M},
+              }
+              \]
+              <p>where \(\sigma^2\) is evaluation detector-noise variance.</p>
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Independent calibration and evaluation give \(R = \sigma^2 + D + \sum_k \frac{p_k(v_k+\nu^2)}{m_k}\). Cauchy–Schwarz yields \(\bigl(\sum_k \sqrt{p_k(v_k+\nu^2)}\bigr)^2 \le \bigl(\sum_k \frac{p_k(v_k+\nu^2)}{m_k}\bigr)\bigl(\sum_k m_k\bigr)\), with equality for \(m_k = M\,\frac{\sqrt{p_k(v_k+\nu^2)}}{S(\mathcal{P})}\), the continuous relaxation of Proposition 4 extended by \(\nu^2\); actual sample counts require integer allocation. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>Consequently, a refinement \(\mathcal{P} \to \mathcal{P}'\) improves the relaxed total error <em>if and only if</em></p>
+
+          \[
+          \boxed{
+          D(\mathcal{P}) - D(\mathcal{P}') \gt \frac{S(\mathcal{P}')^2 - S(\mathcal{P})^2}{M}.
+          }
+          \]
+
+          <p>Reducing geometric distortion alone is insufficient. For an exact counterexample, let the true delay be constant everywhere: with \(K\) equally probable cells, separate sample-mean calibration gives \(R - \sigma^2 = K\nu^2/M\) — every additional cell increases error while providing no geometric benefit.</p>
+
+          <p>A useful scaling law follows for an equal-probability design family with within-cell variance \(A/K^2\). Equal calibration allocation gives \(R(K) - \sigma^2 = \frac{A}{K^2} + \frac{A}{MK} + \frac{\nu^2 K}{M}\); when \(K \ll M\) and \(\nu^2 \gt 0\), balancing the dominant terms gives</p>
+
+          \[
+          \boxed{
+          K_{\mathrm{opt}} \approx \left(\frac{2AM}{\nu^2}\right)^{1/3},
+          }
+          \]
+
+          <p>subject to memory and sampling feasibility. Doubling useful resolution therefore requires approximately eight times the calibration budget, and the \(M^{-2/3}\) error scaling connects to classical nonparametric estimation rates. The refinement rule of §7 should thus optimize expected <em>measurement-error</em> reduction after calibration, rather than geometric distortion reduction alone.</p>
+
+          <h3 id="ext5">Extension 5 — Ray-path sensitivity contributes to dispersion through an inverse Hessian</h3>
+
+          <p>This strengthens the phase-versus-group-delay discussion of §10. Parameterize admissible fixed-endpoint paths by a finite vector \(z\) with redundant coordinates removed, and define the accumulated phase</p>
+
+          \[
+          \Phi(z,\omega) = \frac{\omega}{c}\int_{\gamma_z} n_p(\mathbf{x},\omega)\,d\ell.
+          \]
+
+          <p>A smooth physical branch satisfies \(\nabla_z \Phi(z_\star(\omega),\omega) = 0\); assume the path Hessian \(H = \Phi_{zz}\) is invertible. For the stationary-path phase \(\phi(\omega) = \Phi(z_\star(\omega),\omega)\), group delay is \(\phi'(\omega)\) and group-delay dispersion is \(\phi''(\omega)\).</p>
+
+          <div class="theorem" id="thm-dispersion">
+            <div class="theorem-head"><span class="theorem-tag">Theorem 6</span><span class="theorem-title">Dispersion sensitivity</span></div>
+            <div class="theorem-body">
+              <p>On the stationary branch,</p>
+              \[
+              \boxed{
+              T_g = \phi'(\omega) = \Phi_\omega = \int_{\gamma_{z_\star}} \frac{n_g}{c}\,d\ell,
+              \qquad
+              \frac{dT_g}{d\omega} = \Phi_{\omega\omega} - \Phi_{\omega z} H^{-1} \Phi_{z\omega}.
+              }
+              \]
+              <details class="proof">
+                <summary>Proof</summary>
+                <p>Differentiating stationarity: \(H z_\star'(\omega) + \Phi_{z\omega} = 0\), so \(z_\star' = -H^{-1}\Phi_{z\omega}\). The first derivative of the stationary-path phase is \(\phi' = \Phi_\omega + \Phi_z z_\star' = \Phi_\omega\) because \(\Phi_z = 0\) on the stationary branch. Differentiating once more and substituting \(z_\star'\) proves the dispersion formula. <span class="ev-badge ev-badge--a">A</span></p>
+              </details>
+            </div>
+          </div>
+
+          <p>The important asymmetry: path variation cancels from the <em>first</em> phase derivative but returns in the <em>second</em>. If \(H\) has a small eigenvalue \(\lambda\), with corresponding unit eigenvector \(e\), the path contribution includes \(-|e^\top \Phi_{z\omega}|^2/\lambda\), which can become large when frequency couples to a weakly constrained path deformation. The formula applies while the branch remains nondegenerate; at singularity, a different local treatment is needed.</p>
+
+          <p>Assessing bandwidth using material dispersion alone can therefore miss sensitivity caused by frequency-dependent ray bending. For a smooth branch over \(|\omega - \omega_0| \le h\), the mean-value theorem supplies the practical bound</p>
+
+          \[
+          \boxed{
+          \left|T_g(\omega) - T_g(\omega_0)\right| \le
+          h \sup_{\text{band}} \left|\Phi_{\omega\omega} - \Phi_{\omega z} H^{-1} \Phi_{z\omega}\right|,
+          }
+          \]
+
+          <p>and requiring this to stay below the timing tolerance gives a concrete criterion for when one frequency-specific calibration table is adequate and when the frequency partition of §10 needs refinement.</p>
+
+          <h3 id="s15-design">What the extensions change in the design</h3>
+
+          <ul class="failure-list">
+            <li><strong>Extension 1:</strong> recirculating instruments need history variables (lap counter, launch identity, or accumulated delay) beyond the five-dimensional state.</li>
+            <li><strong>Extension 2:</strong> validation must test autocorrelation and spectra after branch correction, not only residual variance; clock-like spectra can be geometric artifacts.</li>
+            <li><strong>Extension 3:</strong> the benchmark budget must count branch identity exactly; \(J\) branches cost \(J^2\) in MSE relative to identity-discarding compression.</li>
+            <li><strong>Extension 4:</strong> refinement must clear the calibration threshold of Theorem 5; the refinement rule should target post-calibration error, and constant-delay cells are strictly harmful.</li>
+            <li><strong>Extension 5:</strong> bandwidth assessment needs the inverse-Hessian dispersion sensitivity, not material dispersion alone.</li>
+          </ul>
+
+          <!-- §16 -->
+          <h2 id="s16">16. Epilogue: Thursday afternoon</h2>
+
+          <p>It is now Thursday afternoon. The intern has not discovered a new fundamental clock. The custom SoC is not fabricated. Nobody has proved that nature contains a subtler clock beneath the atomic clock. But something worthwhile has happened.</p>
+
+          <p>There is a reproducible optical model, a finite phase-space partition, a contiguous Ada memory arena, an explicit set of address invariants, and a test harness designed to send rays through a caustic. The prototype knows the difference between two rays meeting at the same place. It knows that the outer shells do not behave like the inner shells. It knows that the phase index and the group index are not interchangeable. And it knows that a successful memory lookup is not proof of a successful physical measurement.</p>
+
+          <p>The supervisor walks over. “Did you finish the five-dimensional array?”</p>
+
+          <p>The intern looks at the screen. “Well, technically, it’s a chart-aware discretization of a constrained Hamiltonian phase-space manifold, with canonical cell ownership, group-delay-aware indexing, and formally specified address bounds.”</p>
+
+          <p>The supervisor stares.</p>
+
+          <p>“Does it fit in memory?”</p>
+
+          <p>“Yes.”</p>
+
+          <p>“Does it work?”</p>
+
+          <p>“The encoder passes its current tests. The full proof and metrology validation are still pending.”</p>
+
+          <p>“Excellent. Can you make the boundary more elliptical?”</p>
+
+          <p>The intern closes their eyes. Somewhere, Fermat smiles. Somewhere else, Cauchy begins sharpening a pencil. And Ada, being Ada, asks whether the pencil is within its declared range.</p>
+
+          <h3 id="s16-limits">Three things the prototype does not settle</h3>
+
+          <div class="limits">
+            <div class="limit">
+              <span class="limit-num">1</span>
+              <div><strong>Implementation verification scope.</strong><p>The released Ada/SPARK specification is machine-checked by GNATprove — 47/47 obligations discharged, 0 unproved (<a href="#appendix-a">Appendix A</a>) — which closes Tier 1 for the released chart table. This does not cover the geometry preprocessor, the interrupt-time chart-table update path, or arbitrary chart tables; those remain outside the transcript’s scope and are stated as such. <span class="ev-badge ev-badge--c">C</span></p></div>
+            </div>
+            <div class="limit">
+              <span class="limit-num">2</span>
+              <div><strong>Geometric preprocessing quality.</strong><p>The quality of the geometric preprocessing — quantified cell coverage and approximation error near caustics and deformed boundaries — is a numerical question the four-day schedule does not close (Tier 2, §11).</p></div>
+            </div>
+            <div class="limit">
+              <span class="limit-num">3</span>
+              <div><strong>Metrological benefit.</strong><p>Whether this architecture improves a real femtosecond measurement over a simpler baseline is a scientific question no data structure can answer on its own (Tier 3).</p></div>
+            </div>
+          </div>
+
+          <p>These are not failures of the prototype. They are the specific, testable claims on which it must eventually be judged. The intern writes them down. The supervisor reads the list. Then, after a long silence, asks one final question.</p>
+
+          <p>“Can you have those by Monday?”</p>
+
+          <p>Somewhere, Hamilton stops smiling. And the intern discovers a sixth dimension.</p>
+
+          <p>Overtime.</p>
+
+          <p>But now the intern also has a better answer than he had on Monday. <em>The optimal representation is not the one that stores the fewest coordinates or minimizes a single timing error. It is the least expensive representation that preserves every distinction the instrument may need to make.</em></p>
+
+          <p>That is the paper. The intern started with an array and ended up with a constrained information-theoretic instrument-design problem.</p>
+
+          <!-- Appendix A -->
+          <h2 id="appendix-a" class="appendix-heading">Appendix A — The released encoder and its GNATprove transcript</h2>
+
+          <p>The released Ada/SPARK specification (<a href="code/chart_encoder.ads" target="_blank" rel="noopener noreferrer">chart_encoder.ads</a>, body <a href="code/chart_encoder.adb" target="_blank" rel="noopener noreferrer">chart_encoder.adb</a>) encodes the paper’s design intent: \(E(k,r) = B_k + r\) with consecutive intervals, the range bound, injectivity via a ghost lemma, and bijectivity from consecutiveness. The chart table is the immutable Experiment 4 table — \((B_0,N_0) = (0,512)\), \((B_1,N_1) = (512,256)\), \((B_2,N_2) = (768,256)\).</p>
+
+          <details class="appendix-listing">
+            <summary>Specification — <code>chart_encoder.ads</code></summary>
+            <pre><code>--  Chart-aware contiguous memory encoder for discretized optical phase space.
+--  Companion artifact to "Chart-Aware Contiguous Memory for Discretized Optical
+--  Phase Space" (Sethurathienam Iyer, 2026).
+--
+--  Design intent (paper Sections 7-8):
+--    * E(k, r) = B(k) + r   with consecutive intervals B(0) = 0,
+--      B(k+1) = B(k) + N(k).
+--    * Range bound        : every address produced is &lt; Arena_Size.
+--    * Injectivity        : distinct (chart, rank) pairs yield distinct addresses
+--      (relational property, proved via ghost lemma in body).
+--    * Coverage/bijectivity follows from consecutiveness of the intervals.
+--
+--  The chart table below is the concrete table used in Experiment 4:
+--  (B0, N0) = (0, 512), (B1, N1) = (512, 256), (B2, N2) = (768, 256).
+
+package Chart_Encoder with SPARK_Mode is
+
+   Chart_Count : constant := 3;
+   Arena_Size  : constant := 1024;
+
+   type Chart_Id  is new Natural range 0 .. Chart_Count - 1;
+   type Rank      is new Natural range 0 .. Arena_Size - 1;
+   type Address   is new Natural range 0 .. Arena_Size - 1;
+
+   --  Chart table (immutable at acquisition time; versioned per batch).
+   Base     : constant array (Chart_Id) of Natural := (0, 512, 768);
+   Cells    : constant array (Chart_Id) of Natural := (512, 256, 256);
+
+   --  Contract on the raw table: intervals are consecutive and in bounds.
+   Table_Is_Consistent : constant Boolean :=
+     Base (0) = 0
+     and then (for all J in Chart_Id =&gt;
+                 Base (J) + Cells (J) &lt;= Arena_Size)
+     and then (for all J in Chart_Id'First .. Chart_Id'Last - 1 =&gt;
+                 Base (Chart_Id'Succ (J)) = Base (J) + Cells (J));
+
+   --  Total number of cells across all charts.
+   Cell_Total : constant := 512 + 256 + 256;  --  = Arena_Size
+
+   type Valid_Rank is new Natural range 0 .. Cell_Total - 1;
+
+   --  The map from linear ranks within a chart to addresses is injective
+   --  globally: this predicate expresses that (K, R) corresponds to a
+   --  unique global rank, hence a unique address.
+   function Global_Rank (K : Chart_Id; R : Valid_Rank) return Natural with
+     Pre     =&gt; Natural (R) &lt; Cells (K),
+     Global    =&gt; null,
+     Import,
+     Ghost;
+   --  Encoder: the ONLY address-producing primitive.
+   --  The rank must lie within the chart's own cell count; the range bound
+   --  then follows from the consecutive-interval table invariant.
+   function Encode (K : Chart_Id; R : Valid_Rank) return Address with
+     Pre  =&gt; Natural (R) &lt; Cells (K)
+               and then Base (K) + Natural (R) &lt; Arena_Size,
+     Post =&gt; Natural (Encode'Result) = Base (K) + Natural (R);
+
+   --  Decoder: reconstructs the canonical cell identity from an address.
+   --  Establishes Tier 1 representational correctness: round trip.
+   procedure Decode
+     (A : Address;
+      K : out Chart_Id;
+      R : out Valid_Rank) with
+     Post =&gt; Encode (K, R) = A;
+
+end Chart_Encoder;</code></pre>
+          </details>
+
+          <p>The body adds a ghost lemma <code>Injectivity_Lemma(K1,R1,K2,R2)</code> whose precondition includes the pairwise-disjoint consecutive-interval table invariant and whose postcondition concludes \(K_1=K_2 \wedge R_1=R_2\).</p>
+
+          <div class="transcript">
+            <span class="transcript-kicker">GNATprove 14.1.1 — cvc5, Alt-Ergo, Z3</span>
+            <pre>Summary of SPARK analysis
+---------------------------------------------------------------------------------
+SPARK Analysis results        Total      Flow      Provers   Justified   Unproved
+---------------------------------------------------------------------------------
+Initialization                    2         2            .           .          .
+Run-time Checks                  29         .    29 (CVC5)           .          .
+Assertions                        9         .     9 (CVC5)           .          .
+Functional Contracts              6         .     6 (CVC5)           .          .
+Termination                       1         1            .           .          .
+---------------------------------------------------------------------------------
+Total                            47    3 (6%)     44 (94%)           .          .
+
+  Chart_Encoder          flow analyzed and proved (4 checks)
+  Chart_Encoder.Encode   flow analyzed and proved (13 checks)
+  Chart_Encoder.Decode   flow analyzed and proved (6 checks)
+  Chart_Encoder.Injectivity_Lemma  analyzed and proved (21 checks)</pre>
+          </div>
+
+          <p>The exhaustive runtime test (<a href="code/test_encoder.adb" target="_blank" rel="noopener noreferrer">test_encoder.adb</a>) additionally enumerates all 1,024 chart–rank pairs, confirms no duplicate addresses, checks that the union covers \([0,1024)\), and verifies the decode round trip. Both the specification and the transcript are released with the essay (<a href="code/chart_encoder.ads" target="_blank" rel="noopener noreferrer">code/chart_encoder.*</a>, <a href="code/gnatprove-transcript.txt" target="_blank" rel="noopener noreferrer">code/gnatprove-transcript.txt</a>). Scope: the proof applies to this chart table and contract structure; it does not cover the geometry preprocessor or the interrupt-time update path (§16).</p>
+
+          <!-- Appendix B -->
+          <h2 id="appendix-b" class="appendix-heading">Appendix B — Contact geometry of the fixed-frequency manifold</h2>
+
+          <p>The fixed-frequency optical manifold \(\mathcal{M}_{\omega_0}\) is a regular hypersurface in the cotangent bundle of three-dimensional space. The ambient cotangent bundle has a canonical one-form \(\lambda = \mathbf{p} \cdot d\mathbf{x}\); restrict it to the hypersurface, \(\alpha = \lambda|_{\mathcal{M}_{\omega_0}}\). For a smooth positive isotropic refractive index, this defines a <em>contact form</em>: its kernel is a maximally non-integrable four-dimensional plane field on the five-dimensional manifold. The associated Reeb vector field is tangent to the optical characteristic flow, its trajectories coinciding with the phase-generated ray trajectories up to reparameterization. The full six-dimensional phase space is symplectic, while its fixed-frequency optical hypersurface carries a natural contact structure; the relationship can be understood through symplectization, the positive radial extension of the contact hypersurface.</p>
+
+          <p>This explains why five dimensions arise so naturally: they are not merely the result of deleting one momentum coordinate from a six-dimensional array. They are the dimension of a contact manifold whose distinguished flow describes optical rays. None of this is necessary for the four-day prototype, but it suggests a deeper research direction — whether a discrete optical state representation can preserve useful contact-geometric invariants with controlled approximation error — which is far more ambitious than whether an Ada array can store five indices. It also explains why chart-aware addressing is geometrically natural, even though contact geometry alone does not prescribe a unique or optimal memory layout.</p>
+
+          <!-- References -->
+          <h2 id="references">Bibliography</h2>
+          <ol class="references">
+            <li id="ref-allan">D. W. Allan, “Statistics of Atomic Frequency Standards,” <em>Proceedings of the IEEE</em>, 54(2), 221–230, 1966. <a href="https://doi.org/10.1109/PROC.1966.4634" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-airy">G. B. Airy, “On the Intensity of Light in the Neighbourhood of a Caustic,” <em>Transactions of the Cambridge Philosophical Society</em>, 6, 379–403, 1838.</li>
+            <li id="ref-arnold">V. I. Arnold, <em>Mathematical Methods of Classical Mechanics</em>, 2nd ed., Springer, New York, 1989. <a href="https://doi.org/10.1007/978-1-4757-2063-1" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-barnes">J. Barnes, <em>Programming in Ada 2012</em>, Cambridge University Press, 2014. <a href="https://doi.org/10.1017/CBO9781139629324" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-berry">M. V. Berry and C. Upstill, “Catastrophe Optics: Morphologies of Caustics and Their Diffraction Patterns,” <em>Progress in Optics</em>, 18, 257–346, 1980. <a href="https://doi.org/10.1016/S0079-6638(08)70215-4" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-bonnans">J. F. Bonnans and A. Shapiro, <em>Perturbation Analysis of Optimization Problems</em>, Springer, New York, 2000. <a href="https://doi.org/10.1007/978-1-4612-1394-9" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-bornwolf">M. Born and E. Wolf, <em>Principles of Optics</em>, 7th expanded ed., Cambridge University Press, 1999. <a href="https://doi.org/10.1017/CBO9781139644181" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-cover">T. M. Cover and J. A. Thomas, <em>Elements of Information Theory</em>, 2nd ed., Wiley-Interscience, 2006. <a href="https://doi.org/10.1002/047174882X" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-fermat">P. de Fermat, “Synthèse pour les réfractions,” (Correspondence), 1662.</li>
+            <li id="ref-geiges">H. Geiges, <em>An Introduction to Contact Topology</em>, Cambridge University Press, 2008. <a href="https://doi.org/10.1017/CBO9780511611438" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-gray">R. M. Gray and D. L. Neuhoff, “Quantization,” <em>IEEE Transactions on Information Theory</em>, 44(6), 2325–2383, 1998. <a href="https://doi.org/10.1109/18.720541" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-kravtsov">Y. A. Kravtsov and Y. I. Orlov, <em>Geometrical Optics of Inhomogeneous Media</em>, Springer, Berlin, 1990. <a href="https://doi.org/10.1007/978-3-642-84031-9" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-liouville">J. Liouville, “Note sur la théorie de la variation des constantes arbitraires,” <em>Journal de Mathématiques Pures et Appliquées</em>, 3, 342–349, 1838.</li>
+            <li id="ref-lloyd">S. P. Lloyd, “Least Squares Quantization in PCM,” <em>IEEE Transactions on Information Theory</em>, 28(2), 129–137, 1982. <a href="https://doi.org/10.1109/TIT.1982.1056489" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-max">J. Max, “Quantizing for Minimum Distortion,” <em>IRE Transactions on Information Theory</em>, 6(1), 7–12, 1960. <a href="https://doi.org/10.1109/TIT.1960.1057548" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-mccormick">J. W. McCormick and P. C. Chapin, <em>Building High Integrity Applications with SPARK</em>, Cambridge University Press, 2015. <a href="https://doi.org/10.1017/CBO9781139629294" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-misra">V. Misra, V. K. Goyal, and L. R. Varshney, “Distributed Scalar Quantization for Computing: High-Resolution Analysis and Extensions,” <em>IEEE Transactions on Information Theory</em>, 57(8), 5298–5325, 2011. <a href="https://doi.org/10.1109/TIT.2011.2158882" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-pearcey">T. Pearcey, “The Structure of an Electromagnetic Field in the Neighbourhood of a Cusp of a Caustic,” <em>Philosophical Magazine</em>, 37(272), 311–317, 1946. <a href="https://doi.org/10.1080/14786444608561335" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-shannon">C. E. Shannon, “Coding Theorems for a Discrete Source with a Fidelity Criterion,” <em>IRE International Convention Record</em>, 7, 142–163, 1959.</li>
+            <li id="ref-shapiro">S. S. Shapiro and M. B. Wilk, “An Analysis of Variance Test for Normality (Complete Samples),” <em>Biometrika</em>, 52(3/4), 591–611, 1965. <a href="https://doi.org/10.2307/2333709" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-spark">AdaCore and Altran UK, “SPARK 2014: The Next Generation of High Integrity Software,” 2014. <a href="https://www.spark-2014.org/" rel="noopener noreferrer">Site</a></li>
+            <li id="ref-stone">C. J. Stone, “Optimal Global Rates of Convergence for Nonparametric Regression,” <em>The Annals of Statistics</em>, 10(4), 1040–1053, 1982. <a href="https://doi.org/10.1214/aos/1176345969" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-braunstein">S. L. Braunstein and C. M. Caves, “Information-Theoretic Analysis of Interferometric Measurements,” in <em>Interferometric Measurements</em>, Academic Press, 1989.</li>
+            <li id="ref-self-nitro">S. Iyer, “NitroSAT: A Physics-Informed MaxSAT Solver…,” Zenodo, 2025. <a href="https://doi.org/10.5281/zenodo.18753235" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-self-mult">S. Iyer, “Multiplicative Calculus for Hardness Detection and Branch-Aware Optimization…,” Zenodo, 2025. <a href="https://doi.org/10.5281/zenodo.18373732" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-self-shunya">S. Iyer, “ShunyaBar: Spectral–Arithmetic Phase Transitions for Combinatorial Optimization,” Zenodo, 2025. <a href="https://doi.org/10.5281/zenodo.18214172" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-self-banzhaf">S. Iyer, “banzhaf-ensemble-thesis: V1.0,” Zenodo, 2025. <a href="https://doi.org/10.5281/zenodo.17611452" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-self-spectral">S. Iyer, “Spectral-Multiplicative Optimization Framework,” Zenodo, 2025. <a href="https://doi.org/10.5281/zenodo.17556483" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-self-vacuum">S. Iyer, “Solving SAT with Quantum Vacuum Dynamics,” Zenodo, 2025. <a href="https://doi.org/10.5281/zenodo.17394165" rel="noopener noreferrer">DOI</a></li>
+            <li id="ref-self-caption">S. Iyer, “Image Captioning-Based Image Search Engine: An Alternative to Retrieval by Metadata,” in <em>Proc. SoCPaR</em>, Springer, 2017. <a href="https://doi.org/10.1007/978-981-13-1595-4_14" rel="noopener noreferrer">DOI</a></li>
+          </ol>
+
+          <div class="end-note">
+            <span class="route-kicker">Note on tools</span>
+            <p>A lightweight headless browser and a web-search CLI were used during the preparation of this essay for source retrieval and bibliographic verification. The text, the mathematics, and the synthetic experiments are the author’s.</p>
+          </div>
+
+          <div class="end-note" id="data-availability">
+            <span class="route-kicker">Data &amp; code availability</span>
+            <p>The released artifacts accompany this essay: the synthetic ray generator and deterministic split rule (<a href="code/generate.py" target="_blank" rel="noopener noreferrer">code/generate.py</a>), the uniform and chart-legal DP partition code with 30-seed evaluation (<a href="code/partition.py" target="_blank" rel="noopener noreferrer">code/partition.py</a>), the per-seed results (<a href="code/results_exp5_seeds.csv" target="_blank" rel="noopener noreferrer">code/results_exp5_seeds.csv</a>), the Ada/SPARK encoder with its exhaustive runtime test (<a href="code/chart_encoder.ads" target="_blank" rel="noopener noreferrer">code/chart_encoder.*</a>, <a href="code/test_encoder.adb" target="_blank" rel="noopener noreferrer">code/test_encoder.adb</a>), and the GNATprove transcript (<a href="code/gnatprove-transcript.txt" target="_blank" rel="noopener noreferrer">code/gnatprove-transcript.txt</a>). The two calibration constants of the reference generator are documented in its source; the chart table is the immutable table of Experiment 4.</p>
+          </div>
+
+        </article>
+
+        <footer class="reading-close">
+          <div class="reading-close-rule" aria-hidden="true"><span>∴</span></div>
+          <p class="reading-close-note">End of the essay · 6 theorems · 5 experiments · 3 unsettled obligations</p>
+          <div class="reading-close-actions">
+            <a class="reading-close-contents" href="#lab">Back to the geometry lab <span aria-hidden="true">↑</span></a>
+            <button type="button" id="back-to-top" aria-label="Return to the top of the page">Return to top →</button>
+          </div>
+        </footer>
+      </section>
+
+      <footer class="site-footer">
+        <a class="brand" href="#top" aria-label="optical home">
+          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="16" cy="16" rx="13" ry="10"/><circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/></svg></span>
+          <span class="brand-word">optical<span class="brand-dot">.</span></span>
+        </a>
+        <span>Notes on light, memory, and measurement</span>
+        <span>Essay 01 — October 22, 2026</span>
+        <a href="#top">Back to top ↗</a>
+      </footer>
+    </main>
+  </div>
+
+  <dialog id="search-dialog" aria-label="Search the essay">
+    <div class="search-dialog-heading">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.6 15.6 4.4 4.4"/></svg>
+      <input id="search-input" type="search" placeholder="Search the essay…" aria-label="Search the essay" autocomplete="off" />
+      <button class="close-search" type="button" aria-label="Close search">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19"/></svg>
+      </button>
+    </div>
+    <div class="search-hint">Sections · theorems · experiments · references</div>
+    <div id="search-results"></div>
+    <div class="search-footer"><span>Full text indexed</span><kbd>Esc to close</kbd></div>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="vendor/katex/katex.min.js"></script>
+  <script src="vendor/katex/auto-render.min.js"></script>
+  <script src="vendor/katex/copy-tex.min.js"></script>
+  <script src="app.js"></script>
+  <script async defer src="https://beampipe.io/js/tracker.js" data-beampipe-domain="sethuiyer.github.io"></script>
+</body>
+</html>

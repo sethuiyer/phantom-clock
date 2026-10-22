@@ -1,0 +1,31 @@
+Summary of SPARK analysis
+=========================
+
+---------------------------------------------------------------------------------
+SPARK Analysis results        Total      Flow      Provers   Justified   Unproved
+---------------------------------------------------------------------------------
+Data Dependencies                 .         .            .           .          .
+Flow Dependencies                 .         .            .           .          .
+Initialization                    2         2            .           .          .
+Non-Aliasing                      .         .            .           .          .
+Run-time Checks                  29         .    29 (CVC5)           .          .
+Assertions                        9         .     9 (CVC5)           .          .
+Functional Contracts              6         .     6 (CVC5)           .          .
+LSP Verification                  .         .            .           .          .
+Termination                       1         1            .           .          .
+Concurrency                       .         .            .           .          .
+---------------------------------------------------------------------------------
+Total                            47    3 (6%)     44 (94%)           .          .
+
+
+max steps used for successful proof: 1
+
+Analyzed 2 units
+in unit chart_encoder, 4 subprograms and packages out of 5 analyzed
+  Chart_Encoder at chart_encoder.ads:16 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (4 checks)
+  Chart_Encoder.Decode at chart_encoder.ads:60 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (6 checks)
+  Chart_Encoder.Encode at chart_encoder.ads:53 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (13 checks)
+  Chart_Encoder.Global_Rank at chart_encoder.ads:45 skipped; body is SPARK_Mode => Off
+  Chart_Encoder.Injectivity_Lemma at chart_encoder.adb:6 flow analyzed (0 errors, 0 checks, 1 warnings and 0 pragma Assume statements) and proved (21 checks)
+in unit test_encoder, 0 subprograms and packages out of 1 analyzed
+  Test_Encoder at test_encoder.adb:7 skipped; SPARK_Mode => Off

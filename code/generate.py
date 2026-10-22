@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Reference synthetic generator for Experiment 5 (released artifact).
+
+Calibrated reference model
+--------------------------
+The original experiment script was not preserved; article.md's surviving text
+specifies only that T_g(theta) "varied slowly over one part of the angular
+domain and rapidly over another" and fixes 200k/100k splits, K=64 cells, and
+the held-out distortions 0.000423 -> 0.000242 (1.748x). This reference model
+is the minimal two-regime function calibrated so that:
+
+  * amplitude  A0 = 0.2385 fs  sets uniform-bin distortion to 0.000423 fs^2;
+  * heterogeneity A = 0.728    sets the DP/uniform ratio to 1.748.
+
+Neither constant is derived from physics; both are documented calibration
+parameters of the synthetic benchmark (evidence type B).
+
+Model
+-----
+  theta ~ Uniform[0, pi)
+  f(theta) = A0 * sin(2 theta)                 for theta <  pi/2   (slow regime)
+           = A0 * A * sin(4 theta)             for theta >= pi/2   (rapid regime)
+  branch b in {-1, +1} selects propagation direction Omega(theta) or -Omega(theta);
+  delay T = f(theta) is branch-independent, so delay-only addresses merge
+  opposite-direction rays (the inadmissible partition of Sec. 12.5).
+
+Split rule (deterministic, seed-independent)
+-------------------------------------------
+  canonical identity string "%.17g|%d" % (theta, b); SHA-256; first 8 hex
+  digits mod 5 == 0 -> test (20%), else train (80%).
+"""
+import hashlib
+
+import numpy as np
+
+A0 = 0.4117132519529059
+A_RAPID = 0.728
+
+
+def delay(theta):
+    """Group-delay function T_g(theta) in fs (branch-independent)."""
+    t = np.asarray(theta, dtype=float)
+    return np.where(t < 0.5 * np.pi,
+                    A0 * np.sin(2.0 * t),
+                    A0 * A_RAPID * np.sin(4.0 * t))
+
+
+def make_rays(n, seed):
+    rng = np.random.default_rng(seed)
+    theta = rng.uniform(0.0, np.pi, n)
+    branch = rng.integers(0, 2, n) * 2 - 1
+    return theta, branch, delay(theta)
+
+
+def _is_test(theta, branch):
+    s = "%.17g|%d" % (theta, branch)
+    return int(hashlib.sha256(s.encode()).hexdigest()[:8], 16) % 5 == 0
+
+
+def split(theta, branch):
+    test = np.array([_is_test(t, b) for t, b in zip(theta, branch)], dtype=bool)
+    return ~test, test
