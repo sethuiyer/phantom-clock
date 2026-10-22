@@ -59,7 +59,16 @@ forbids: optimizing the scalar observable alone reaches $10.6\times$ lower disto
 but its cells fragment into $91$ angular runs against $32$, so it is not
 representable at equal address cost. Chart legality is therefore an
 address-structure cost, not a moral one, and topology, identity, address count,
-calibration, and distortion are coupled resources. Synthetic experiments demonstrate
+calibration, and distortion are coupled resources. We unify these results under a single
+criterion, \emph{observable-sufficient representation}: an encoder is admissible for a
+required observable $Y$ exactly when it never merges two admissible histories with
+different $Y$ (Theorem~\ref{thm:factorization}), and spatial aliasing at caustics,
+quantization aliasing at finite resolution, and the closed-orbit obstruction are that one
+condition violated at three levels. Read this way, preserving $J$ independent branch
+identities costs exactly a factor $J^{2}=4^{\log_2 J}$---it is the per-bit price of
+identity in the address, not a separate phenomenon---and reserving history bits is free
+whenever calibration, rather than address width, is the binding resource.
+Synthetic experiments demonstrate
 that a spatial-only representation can manufacture apparent timing fluctuations by
 merging distinct ray branches at a caustic, and that finite-resolution phase-space
 representation converts between-branch variance into within-cell variance by an exactly
@@ -194,6 +203,11 @@ property while locality is a geometric property, which are not interchangeable
 \item Derivation of the optical state space from Fermat's principle, the eikonal
 equation, and Hamiltonian characteristics; identification of caustics as the failure of
 \emph{spatial} invertibility, not of ray dynamics (\S\ref{sec:fermat}--\S\ref{sec:phase-space}).
+\item A unifying criterion for measurement representations (Appendix~\ref{app:framework}):
+  an encoder is observable sufficient for $Y$ iff equal encodings imply equal $Y$, under
+  which the caustic failure, finite-resolution aliasing and the closed-orbit obstruction
+  are one condition at three levels, and under which the branch-penalty $J^{2}$ of
+  Theorem~\ref{thm:branchcost} is the per-bit cost of identity, $J^{2}=4^{\log_2 J}$.
 \item A chart-aware contiguous encoder with explicit range and injectivity obligations,
 including the distinction between the two (\S\ref{sec:addressing}, \S\ref{sec:ada}),
 released as a verification-ready specification with a GNATprove transcript
@@ -2018,6 +2032,206 @@ Liv\v{s}ic route to a full characterisation of the removable component requires 
 hyperbolicity and regularity hypotheses that we have not verified for the optical flow,
 and a memory-minimality theorem would require the encoder and reconstruction requirements
 to be formalised, which the prototype does not do.
+
+\section{Observable-sufficient representation: the unifying criterion}\label{app:framework}
+
+The preceding sections are ordinarily read as separate techniques: a geometric lifting
+(\S\ref{sec:phase-space}), an encoder (\S\ref{sec:ada}), a rate--distortion allocation
+(\S\ref{sec:rate-distortion}), and a history obstruction (\S\ref{sec:extensions}). This
+appendix shows that they are one statement, and that the failure modes and the costs are
+all instances of it. The organising notion is a criterion on the encoder.
+
+\subsection{The criterion}
+
+Let $\mathcal{H}$ be a set of admissible physical histories, $\mathcal{A}$ a memory
+representation, $\mathcal{Y}$ a measurement space, $E:\mathcal{H}\to\mathcal{A}$ an encoder
+and $Y:\mathcal{H}\to\mathcal{Y}$ the observable the instrument must report. Here a
+\emph{history} $H$ is the datum a real acquisition records---a trajectory segment with its
+initial state, its accumulated propagation, and any branch label---of which the
+instantaneous five-dimensional state $q$ is only a summary.
+
+\begin{theorem}[Exact observable factorization]\label{thm:factorization}
+There exists a decoder $g:E(\mathcal{H})\to\mathcal{Y}$ with $Y=g\circ E$ if and only if
+\begin{equation}
+\boxed{\;E(H_1)=E(H_2)\ \Longrightarrow\ Y(H_1)=Y(H_2)\;}
+\end{equation}
+for all $H_1,H_2\in\mathcal{H}$. [evidence type A]
+\end{theorem}
+\begin{proof}
+If $Y=g\circ E$ and $E(H_1)=E(H_2)$, then
+$Y(H_1)=g(E(H_1))=g(E(H_2))=Y(H_2)$. Conversely, if the implication holds, define
+$g(a)=Y(H)$ for any $H$ with $E(H)=a$; the hypothesis makes $g$ well defined on
+$E(\mathcal{H})$, and $Y=g\circ E$ by construction.
+\end{proof}
+
+We call $E$ \emph{observable sufficient} for $Y$ when the hypothesis of
+Theorem~\ref{thm:factorization} holds. The theorem is elementary---it is the universal
+property of factoring a map through a quotient---but it locates the exact boundary of
+admissible compression: an encoder may merge two histories precisely when the instrument
+cannot distinguish them in the quantity it must report, and not one history more. For
+several required outputs one takes $Y=(T_g,B,Q,\dots)$ with $B$ the ray-branch identity and
+$Q$ any further mandatory invariant, which converts physical-identity preservation from an
+informal desideratum into a reconstruction contract.
+
+\subsection{The failure modes are instances}
+
+\paragraph{Spatial aliasing (caustic).} At a caustic two histories share a position, so
+$E_{3\mathrm{D}}(H_1)=E_{3\mathrm{D}}(H_2)$, while differing directions give different
+delays, so $Y(H_1)\neq Y(H_2)$: the three-dimensional encoder fails
+Theorem~\ref{thm:factorization}. The residual this induces is exactly the
+$\operatorname{Var}_U(T_g)$ of Experiment~1, which the instrument reports as timing noise.
+Lifting to $\Mopt$ restores sufficiency for single-pass geometry.
+
+\paragraph{Historical aliasing (closed orbit).} On a closed trajectory $q(P)=q(0)$, so
+even $E_{5\mathrm{D}}(H_1)=E_{5\mathrm{D}}(H_2)$, while
+$Y(H_2)-Y(H_1)=\oint_\gamma(n_g/c)\,d\ell>0$. The five-dimensional encoder fails the
+criterion, and Theorem~\ref{thm:coboundary} explains why no refinement of it can succeed:
+the delay is a nontrivial cocycle, so the required decoder does not exist for any encoding
+that factors through the instantaneous state. Sufficiency requires extending $E$ by a
+history invariant.
+
+\paragraph{Finite resolution.} Distinct states fall in the same cell, so the encoder merges
+histories whose delays differ within the cell. This is the same condition violated at a
+representational rather than a geometric level, and it is the subject of
+\S\ref{sec:rate-distortion}.
+
+Table~\ref{tab:threelimits} summarises the reading. The three rows are one criterion, and
+the engineering response in each case is determined by which equivalence class the
+observable requires.
+
+\begin{table}[t]
+\centering
+\caption{Three aliasing modes, one criterion}
+\label{tab:threelimits}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Limitation & Violated condition & Response \\
+\midrule
+Spatial aliasing & $E_{3\mathrm{D}}$ merges histories with $Y$ different & lift to $\Mopt$ \\
+Quantization aliasing & finite cells merge distinguishable states & constrained allocation \\
+Historical aliasing & cocycle does not factor through $q$ & retain history invariant \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Branch preservation as a bit budget}
+
+Theorem~\ref{thm:branchcost} was stated for $J$ equal branches carrying a uniform delay of
+width $W$. The argument generalises, and in doing so makes the cost comparable across the
+paper. Suppose branch $j$ has probability $p_j$, and that at high rate the squared-error
+distortion of a scalar quantiser with $K_j$ cells on branch $j$ is $C_jK_j^{-2}$ (for a
+uniform width-$W$ branch, $C_j=W^2/12$).
+
+\begin{proposition}[General branch-preservation cost]\label{prop:generalbranch}
+Under a total cell budget $\sum_j K_j=K$, the optimal branch-preserving allocation is
+$K_j\propto(p_jC_j)^{1/3}$, giving
+\begin{equation}
+D_{\mathrm{branch}}^\star(K)=\frac{\left(\sum_{j=1}^{J}(p_jC_j)^{1/3}\right)^{\!3}}{K^{2}},
+\end{equation}
+while an unconstrained quantiser that may pool branches attains $D_{\mathrm{pooled}}(K)
+\approx C_\ast/K^2$ with $C_\ast$ the pooled constant. [evidence type A]
+\end{proposition}
+\begin{proof}
+Minimise $\sum_j p_jC_jK_j^{-2}$ subject to $\sum_jK_j=K$. The stationarity condition is
+$-2p_jC_jK_j^{-3}=\lambda$ for all $j$, hence $K_j\propto(p_jC_j)^{1/3}$. Substituting
+$K_j=K(p_jC_j)^{1/3}/S$ with $S=\sum_i(p_iC_i)^{1/3}$ gives
+$D^\star=S^2K^{-2}\sum_j(p_jC_j)^{1/3}=S^3/K^2$.
+\end{proof}
+
+\begin{corollary}[Theorem~\ref{thm:branchcost} is the symmetric instance]\label{cor:j2}
+If the branches are equiprobable and share a common constant $C$, then
+$S=J^{2/3}C^{1/3}$ and $D^\star_{\mathrm{branch}}/D_{\mathrm{pooled}}=J^{2}$.
+\end{corollary}
+
+The qualification matters and we state it plainly: this is a high-rate result for
+squared-error scalar quantisation of overlapping branch distributions under a shared total
+cell budget. It is not a universal penalty for preserving branch identity, and it does not
+apply when the branch-conditioned distributions are disjoint, in which case pooling is
+already lossless.
+
+There is a second reading of $J^2$ that unifies it with the next subsection. Distinguishing
+$J$ branches requires $\lceil\log_2J\rceil$ bits of the address, so the effective cell count
+falls from $K$ to $K/J$ and the squared-error distortion rises by exactly
+$(K/(K/J))^2=J^2=2^{2\log_2 J}$. The branch penalty of Theorem~\ref{thm:branchcost} is
+therefore not a separate phenomenon: it is the per-bit cost of identity, evaluated at
+$b=\log_2 J$ bits.
+
+\subsection{What a reserved history bit actually costs}
+
+Finally, reserve $b$ bits of a fixed $B$-bit address for a history invariant---for example
+a lap counter with $b=\lceil\log_2(R+1)\rceil$ encoding up to $R$ traversals. Then
+$K\le 2^{B-b}$, and the model of Theorem~\ref{thm:threshold} reads
+\begin{equation}
+R(K)-\sigma^{2}=\frac{A}{K^{2}}+\frac{A}{MK}+\frac{\nu^{2}K}{M},
+\qquad K\le 2^{B-b}.
+\end{equation}
+It is tempting to conclude that each history bit multiplies distortion by four, since
+$K\mapsto K/2$ doubles the $A/K^2$ term. That conclusion is only sometimes right, and
+comparing the reserved bit against the calibration-optimal cell count
+$K_{\mathrm{opt}}\approx(2AM/\nu^{2})^{1/3}$ separates the cases.
+
+\begin{proposition}[Cost of history bits]\label{prop:historybits}
+Let $K_{\mathrm{opt}}=(2AM/\nu^{2})^{1/3}$ and suppose $K$ is chosen optimally subject to
+$K\le 2^{B-b}$. Then:
+\begin{enumerate}[label=(\roman*)]
+\item if $K_{\mathrm{opt}}\le 2^{B-b}$, the address budget does not bind, the optimal cell
+  count is $K_{\mathrm{opt}}$, and the optimal error is \emph{independent of $b$}: reserved
+  history bits are free, because the calibration budget, not the address, is what limits
+  resolution;
+\item if $K_{\mathrm{opt}}>2^{B-b}$, the address binds and $K=2^{B-b}$, whence
+  \begin{equation}
+  R(b)-\sigma^{2}=\frac{A\,2^{2b}}{2^{2B}}+\frac{A\,2^{b}}{2^{B}M}+\frac{\nu^{2}}{M}\,2^{B-b};
+  \end{equation}
+  the quantization term grows by exactly $2^{2b}$ but the calibration term \emph{decays} by
+  $2^{-b}$, so the net penalty is strictly below $2^{2b}$ and is negative for sufficiently
+  large $\nu^{2}$.
+\end{enumerate}
+[evidence type A within the stated model]
+\end{proposition}
+\begin{proof}
+Immediate from Theorem~\ref{thm:threshold} and $K\le2^{B-b}$. In (ii) the third term of
+$R$ decreases in $b$, so
+$R(b)-R(0)<(2^{2b}-1)A/2^{2B}$ plus a $2^{b}$-order correction; and
+$\partial_b R$ at $b=0$ is $\ln2\,(2A/2^{2B}+A/(2^{B}M)-\nu^{2}2^{B}/M)$, which is negative
+whenever the per-cell calibration noise dominates.
+\end{proof}
+
+Part (i) is the practically important one, and it explains an apparent tension in the
+literature on the prototype: adding a lap counter is often nearly free, because the binding
+constraint was never the address width. Part (ii) also shows that coarsening a partition can
+\emph{reduce} total measurement error when calibration is noisy, which is the same effect as
+the constant-delay counterexample of \S\ref{sec:extensions}. The two are the same mechanism
+seen from opposite directions: cells cost calibration samples.
+
+\subsection{Statement of the framework, and an open problem}
+
+The results of this paper can now be stated as one thesis. A scientifically valid
+measurement representation is an encoding of histories whose fibres respect the required
+observable equivalence classes, subject to finite hardware and calibration resources:
+\begin{equation}
+\boxed{
+\begin{gathered}
+\min_{E,\,g,\,K,\,b,\,\{m_k\}}\ \ \mathbb{E}\bigl[d(Y,g(E(H)))\bigr]+\sum_k\frac{p_kv_k}{m_k}\\
+\text{subject to}\quad E(H_1)=E(H_2)\Rightarrow Y(H_1)=Y(H_2),\quad
+\log_2K+b\le B,\quad \sum_k m_k\le M,
+\end{gathered}}
+\end{equation}
+equivalently by Theorem~\ref{thm:factorization}: choose the coarsest encoding whose fibres
+lie inside the level sets of $Y$, then spend the remaining address and calibration budget
+optimally. On this reading, topology, branch identity, address capacity, calibration budget
+and observable distortion are not independent design knobs but coupled resources, which is
+the claim of \S\ref{sec:discussion} made precise.
+
+What is missing is a single lower bound coupling all of them. The components are
+individually known---$J^{2}$ for identity (Corollary~\ref{cor:j2}),
+$2^{2b}$ for reserved history bits in the address-limited regime
+(Proposition~\ref{prop:historybits}), and the $M^{-2/3}$ law of
+Theorem~\ref{thm:threshold}---but their \emph{joint} optimum, in which $J$, $R$, $B$ and $M$
+trade against one another, has not been derived here. Proposition~\ref{prop:historybits}
+indicates that the answer is not a product of the individual factors, since the calibration
+term enters with the opposite sign. Obtaining that bound, and identifying which of the four
+resources is binding for a given instrument class, is the natural quantitative continuation
+of this work.
 
 \section*{Data and code availability}
 The released artifacts accompany this manuscript: the synthetic ray generator and
