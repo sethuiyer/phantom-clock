@@ -16,6 +16,8 @@ Space" (Sethurathienam Iyer, ORCID 0009-0008-5446-2856).
 | `test_encoder.adb` | Exhaustive runtime bijection test (Experiment 4) |
 | `gnatprove-transcript.txt` | GNATprove 14.1.1 proof transcript: 47/47 obligations, 0 unproved |
 | `AUDIT.md` | Third-party audit of the released artifacts (see Scope below) |
+| `verified/` | **Parameterized** encoder: injectivity proved for ALL consistent tables, not one instance |
+| `verified/gnatprove-general-transcript.txt` | GNATprove run: 97 obligations, 93 proved, 0 unproved |
 
 ## Experiment 5 model (exact spec)
 
@@ -67,6 +69,38 @@ quantity. It reports:
   distortion; Theorem 11 prices the analogous trade analytically.
 
 ## Ada verification
+
+Two packages are released:
+
+* `chart_encoder.*` — the original **instance**: a three-entry literal table
+  `(0,512,768)/(512,256,256)`. 47 obligations, 44 proved, 0 unproved. The proof holds
+  because the table is a constant, so injectivity is true there by construction.
+* `verified/general_chart_encoder.*` — the **class**: the table is a discriminated record
+  passed as a value, so the contracts quantify over every consistent table up to
+  `Max_Charts x Max_Arena`. 97 obligations, 93 proved, 0 unproved.
+
+Three defects had to be fixed to get from the first to the second: the adjacency
+condition cannot use a range ending at `K_Max - 1` (that underflows the index subtype at
+`K_Max = 0`); the ghost lemmas need bodies, since a specification alone proves nothing;
+and the monotonicity lemma is load-bearing — gutting it leaves its own postcondition
+unproved and makes injectivity rest on an unproved callee contract.
+
+```
+export PATH=<gnatprove>/libexec/spark/bin:<gnatprove>/bin:$PATH
+# instance
+cd code && gprbuild -P chart_encoder.gpr && ./test_encoder && gnatprove -P chart_encoder.gpr --level=2
+# class
+cd code/verified && gprbuild -P general_chart_encoder.gpr && ./test_general \
+  && gnatprove -P general_chart_encoder.gpr --level=2
+```
+
+The runtime driver in `verified/test_general.adb` checks bijectivity, arena coverage and
+decode round trips on four table shapes — including the degenerate single-chart
+`K_Max = 0` the instance form cannot express — plus five negative controls.
+
+### Original instance notes
+
+
 
 ```
 export PATH=<alire>/gnat_native_14.2.1/bin:<alire>/gprbuild_22.0.1/bin:<gnatprove>/bin:$PATH

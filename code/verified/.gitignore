@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.ali
+*.o
+b~*
+test_general
+gnatprove/

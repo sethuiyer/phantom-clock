@@ -123,6 +123,7 @@
         <a href="#appendix-c" class="chapter-link chapter-link--appendix"><span class="chapter-number">C</span><span class="chapter-title">Phase 2 — after tea break</span></a>
         <a href="#appendix-d" class="chapter-link chapter-link--appendix"><span class="chapter-number">D</span><span class="chapter-title">Memory is a cocycle</span></a>
         <a href="#appendix-e" class="chapter-link chapter-link--appendix"><span class="chapter-number">E</span><span class="chapter-title">One criterion, not three techniques</span></a>
+        <a href="#appendix-f" class="chapter-link chapter-link--appendix"><span class="chapter-number">F</span><span class="chapter-title">Effective dimension &amp; timescales</span></a>
         <a href="#references" class="chapter-link chapter-link--appendix"><span class="chapter-number">Bib</span><span class="chapter-title">Bibliography</span></a>
       </nav>
       <footer class="rail-foot">
@@ -1987,6 +1988,132 @@ Total                            47    3 (6%)     44 (94%)           .          
           <p>What is missing is a single lower bound coupling all four. The components are individually known: \(J^2\) for identity, \(2^{2b}\) for reserved history bits in the address-limited regime, and the \(M^{-2/3}\) law for calibration. But their <em>joint</em> optimum, where \(J\), \(R\), \(B\) and \(M\) trade against one another, is not derived here — and §E.4 shows the answer is not simply the product of the individual factors, since the calibration term enters with the opposite sign. Getting that bound, and identifying which of the four resources binds for a given instrument class, is the natural quantitative continuation.</p>
 
           <p>That is the honest position. One criterion, three instances, two exact costs, and one open law still to be found.</p>
+
+          <!-- ============================ APPENDIX F ============================ -->
+          <h2 id="appendix-f" class="appendix-heading">Appendix F — Why the exponent survives, and why the timescale matters</h2>
+
+          <p class="phase-kicker"><span class="opening-square" aria-hidden="true"></span>The next phase · effective dimension, joint budget, timescale sufficiency</p>
+
+          <p>Three results sharpen <a href="#appendix-e">Appendix E</a>. The first explains why a <em>five</em>-dimensional problem produced a one-dimensional error law, and turns the 91-run measurement into a consequence of a quotient rather than an anecdote. The second couples identity, history, calibration and dimension into one budget and shows where each resource binds. The third shows that pointwise distortion and metrological stability can rank the same two encoders in opposite orders — the strongest available argument that sufficiency has to be stated at the timescale the instrument actually uses.</p>
+
+          <h3 id="f1">F.1 Effective dimension: why <span style="font-style:normal">\(K^{-2}\)</span> survives</h3>
+
+          <p>Let \(T_g:\mathcal{M}_{\omega_0}\to\mathbb{R}\) be smooth with \(\nabla T_g\neq 0\). Its level sets foliate the five-dimensional manifold into four-dimensional hypersurfaces. An unconstrained scalar quantizer ignores that structure entirely: it slices the <em>range</em> of \(T_g\), so the partition is effectively one-dimensional and Zador's theorem gives squared-error distortion \(\asymp K^{-2}\) — even though \(\nabla T_g\) has nonzero components in all five coordinates. The relevant dimension is not the manifold's, but that of the quotient by the level-set foliation. Call it the <strong>effective dimension</strong> \(d_{\mathrm{eff}}\); here \(d_{\mathrm{eff}}=1\).</p>
+
+          <p>Chart legality breaks the quotient, because cells must be contiguous in \(\Omega\) and can no longer slice cleanly along level sets. Two outcomes are possible, and only one changes the exponent:</p>
+
+          <table class="data-table">
+            <caption>What chart legality actually costs</caption>
+            <thead><tr><th scope="col">outcome</th><th scope="col">exponent</th><th scope="col">cost of legality</th></tr></thead>
+            <tbody>
+              <tr><td>stays 1-D in \(\Omega\), <em>folds</em> across level sets</td><td class="num">\(K^{-2}\)</td><td>constant factor</td></tr>
+              <tr><td>must resolve \(d\) independent directions</td><td class="num">\(K^{-2/d}\)</td><td>exponent change</td></tr>
+            </tbody>
+          </table>
+
+          <p>The released experiment is the first case, and it is checkable. Fitting the chart-legal DP distortions gives local log–log slopes \(1.70, 1.76, 1.86, 1.93\) across \(K=16\to256\), with a global slope of \(1.81\); the uniform baseline gives \(1.98\). Both are consistent with \(d_{\mathrm{eff}}=1\), approaching exponent \(2\) with a slowly vanishing finite-\(K\) correction. <span class="ev-badge ev-badge--b">B</span></p>
+
+          <p>So chart legality costs a <em>constant</em>, not an exponent. Three constants, in fact, and they should never be conflated:</p>
+
+          <table class="data-table">
+            <caption>Three different costs of the same constraint</caption>
+            <thead><tr><th scope="col">quantity</th><th scope="col">value</th><th scope="col">what it measures</th></tr></thead>
+            <tbody>
+              <tr><td>distortion gap</td><td class="num">\(6.05\times\)</td><td>chart-legal vs unconstrained at equal cells</td></tr>
+              <tr><td>address-structure cost</td><td class="num">\(2.84\times\)</td><td>\(91/32\) runs needed to realize it</td></tr>
+              <tr><td>improvement over uniform</td><td class="num">\(10.6\times\)</td><td>scalar optimum vs uniform binning</td></tr>
+            </tbody>
+          </table>
+
+          <p>The general lesson: <strong>hardware and identity constraints determine \(d_{\mathrm{eff}}\), not the calculus of \(T_g\) alone.</strong></p>
+
+          <h3 id="f2">F.2 The joint budget, and where the 4× comes from</h3>
+
+          <p>Now couple everything. An encoder must be sufficient for \(J\) equiprobable branches and \(R+1\) history states, with \(K\le 2^B\) addresses, \(M\) calibration rays of noise \(\nu^2\), and effective dimension \(d\). Each of the \(A\equiv J(R+1)\) classes gets \(K/A\) cells, so within-class distortion is \(C_d(A/K)^{2/d}\), while calibration is charged on all \(K\) cells globally:</p>
+
+          \[ R(K;A,M,d)-\sigma^2 = C_d\left(\frac{A}{K}\right)^{2/d} + \frac{\nu^2 K}{M}, \qquad K\le 2^B. \]
+
+          <p>Be precise about what this is: a <strong>two-term model</strong> — Zador's asymptotic quantization term plus the calibration variance of §11 — not a minimax lower bound over all encoders, since no matching converse is proved and Zador's constant is asymptotic. The optimum is exact <em>for the model</em>:</p>
+
+          \[ K_{\mathrm{opt}} = \left(\frac{2C_d}{d\,\nu^2}M A^{2/d}\right)^{\frac{d}{d+2}}, \qquad R^\star-\sigma^2 = \left(1+\frac{d}{2}\right)\left(\frac{2C_d}{d}\right)^{\frac{d}{d+2}} A^{\frac{2}{d+2}}\left(\frac{\nu^2}{M}\right)^{\frac{2}{d+2}}. \]
+
+          <p>We checked this against direct numerical optimization for \(d\in\{1,2,3,5\}\) — agreeing to \(10^{-10}\) in \(K_{\mathrm{opt}}\) and machine precision in \(R^\star\) — and against a symbolic stationarity computation. Two regimes follow, and they resolve the tension from Appendix E:</p>
+
+          <table class="data-table">
+            <caption>Two regimes, and what one reserved bit costs</caption>
+            <thead><tr><th scope="col">regime</th><th scope="col">binding resource</th><th scope="col">identity exponent</th><th scope="col">cost per bit (\(d=1\))</th></tr></thead>
+            <tbody>
+              <tr><td>memory-bound, \(2^B\ll K_{\mathrm{opt}}\)</td><td>address width</td><td class="num">\(A^{2/d}=A^2\)</td><td class="num">\(4\times\)</td></tr>
+              <tr><td>calibration-bound, \(2^B\ge K_{\mathrm{opt}}\)</td><td>sample budget</td><td class="num">\(A^{2/(d+2)}=A^{2/3}\)</td><td class="num">\(2^{2/3}\approx1.59\times\)</td></tr>
+            </tbody>
+          </table>
+
+          <p>In the calibration-bound regime one bit costs \(1.59\times\), not \(4\times\), because the optimizer raises \(K_{\mathrm{opt}}\propto A^{2/3}M^{1/3}\) to absorb the identity pressure — trading calibration variance against quantization variance. So Appendix E's "\(4\times\) per bit" and the branch penalty \(J^2\) are <em>memory-bound</em> statements, and the coupled optimum is far more forgiving. At \(d=1\) this also reproduces the \(M^{-2/3}\) and \(K_{\mathrm{opt}}\propto M^{1/3}\) laws of §15, which are therefore the \(d=1\), \(A=1\) instance. <span class="ev-badge ev-badge--a">A</span></p>
+
+          <h3 id="f3">F.3 Timescale sufficiency: when the ranking reverses</h3>
+
+          <p>Everything so far optimizes a single-sample functional. That is not what a clock specification asks for. Let \(\delta_t\) be the unresolved delay residual — a zero-mean wide-sense-stationary <em>per-sample frequency-error</em> process, independent of the ideal instrument error, with autocovariance \(C(h)\). Take non-overlapping block means and the excess Allan variance</p>
+
+          \[ \mathcal{D}_\tau(E) = \tfrac12\,\mathbb{E}\left[(\bar\delta_{k+1,\tau}-\bar\delta_{k,\tau})^2\right]. \]
+
+          <p>One definition, used throughout. An earlier draft mixed this with the second difference of adjacent block averages, which gives \((3R_B(0)-4R_B(1)+R_B(2))/\tau^2\) and is <em>not</em> equivalent; every result here uses the block-difference form, and \(\delta_t\) must be read as a frequency-error process rather than a raw phase residual.</p>
+
+          <blockquote class="theorem-block">
+            <p><strong>Theorem (exact trajectory distortion).</strong> \(\displaystyle \mathcal{D}_\tau(E)=\frac{1}{\tau^{2}}\sum_{i,j=0}^{\tau-1}\left[C(j-i)-C(\tau+j-i)\right]\). If \(C(h)=a^2\rho^{|h|}\) this reduces to</p>
+            <p style="text-align:center">\(\displaystyle \mathcal{D}_\tau=\frac{a^{2}}{\tau^{2}}\left[\tau+2\sum_{h=1}^{\tau-1}(\tau-h)\rho^{h}-\frac{\rho(1-\rho^{\tau})^{2}}{(1-\rho)^{2}}\right]=\frac{\mathcal{L}_1(E)}{\tau^{2}}\Phi(\rho,\tau)\)</p>
+            <p>with \(\mathcal{L}_1(E)=a^2\) the pointwise distortion. <span class="ev-badge ev-badge--a">A</span></p>
+          </blockquote>
+
+          <p>Verified against the direct double sum for six parameter sets spanning \(\rho\in\{0,0.5,0.9,0.99,0.999\}\) and \(\tau\in\{1,\dots,1024\}\): relative error below \(2\times10^{-15}\), and the boundary cases \(\Phi(\rho,1)=1-\rho\) and \(\Phi(0,\tau)=\tau\) exact.</p>
+
+          <p><strong>Iso-distortion divergence.</strong> Take two independent symmetric Markov branches with equal amplitudes \(a_1=a_2=a\) and persistences \(\rho_1=0<\rho_2<1\), with a budget that resolves exactly one. Then \(\mathcal{L}_1(E_1)=\mathcal{L}_1(E_2)=a^2\) by construction, yet</p>
+
+          \[ \frac{\mathcal{D}_\tau(E_1)}{\mathcal{D}_\tau(E_2)}=\frac{\Phi(\rho_2,\tau)}{\Phi(0,\tau)}=\frac{\Phi(\rho_2,\tau)}{\tau}. \]
+
+          <p>Maximizing over \(\rho_2\) for \(\tau\in\{16,\dots,4096\}\), the supremum is attained at \(1-\rho_2\approx1.89/\tau\) and equals</p>
+
+          \[ \sup_{\rho_2}\frac{\mathcal{D}_\tau(E_1)}{\mathcal{D}_\tau(E_2)}\sim c\,\tau,\qquad c=0.3811, \]
+
+          <p>so the divergence is \(\Theta(\tau)\). The constant is \(c=\max_\alpha\psi(\alpha)\) with \(\psi(\alpha)=[2(\alpha-1+e^{-\alpha})-(1-e^{-\alpha})^2]/\alpha^2\), maximized at \(\alpha^\star=1.8926\). We note both routes because a draft of this material quoted \(c=0.4053\): recomputing by (a) direct maximization of \(\Phi(\rho,\tau)/\tau\) in \(\rho\) and (b) numerical quadrature of \(\psi\) both give \(0.3811\), so the earlier constant was in error by 6%.</p>
+
+          <p>Two qualifications. The supremum requires persistence to grow with the averaging window; for fixed \(\rho<1\) the ratio eventually decays as \(O(\tau^{-1})\), so \(\Theta(\tau)\) is a supremum over \(\rho\), not a claim about any fixed chain. And the divergence is in <em>excess</em> Allan variance — the ideal instrument error is common to both encoders.</p>
+
+          <p><strong>Ranking reversal.</strong> Let \(a_1>a_2\) with \(1<a_1^2/a_2^2<\Phi(\rho_2,\tau_{\text{long}})/\Phi(\rho_1,\tau_{\text{long}})\), and \(\rho_2\) close enough to 1 that \((1-\rho_2)/(1-\rho_1)<a_1^2/a_2^2\). At \(\tau=1\), \(\Phi(\rho,1)=1-\rho\), so \(E_1\) wins both pointwise and at short windows. At \(\tau_{\text{long}}\) the inequality reverses and \(E_2\) wins. The mechanism is worth saying plainly: at \(\tau=1\) a highly persistent branch is nearly a DC offset, so its first difference almost vanishes; at long windows that same persistence is exactly what fails to average down.</p>
+
+          <p>This is the trajectory-level counterpart of <a href="#appendix-e">Appendix E</a>'s factorization theorem: pointwise sufficiency is the \(\tau\to0\) idealization, and an encoder can be pointwise sufficient while being metrologically inadequate at the window the specification names.</p>
+
+          <h3 id="f4">F.4 The obstruction: the cell-additive objective is not generally right</h3>
+
+          <p>For a partition \(\mathcal{P}\) with residual covariance \(C_{\mathcal{P}}(h)\), the trajectory-correct objective is</p>
+
+          \[ \min_{\mathcal{P}}\ \frac{1}{\tau^{2}}\sum_{i,j=0}^{\tau-1}\left[C_{\mathcal{P}}(j-i)-C_{\mathcal{P}}(\tau+j-i)\right] \]
+
+          <p>subject to chart legality, branch preservation, address capacity and calibration. Replacing \(v_k\) by the effective weight \(v_k\Phi_k(\tau)/\tau^2\) in the DP of §13 gives a cell-additive surrogate that prefers splitting cells whose residuals are persistent even when their static variance is small.</p>
+
+          <p>But it is <strong>not</strong> generally separable over cells. Residuals from different cells can be correlated — a ray leaving a persistent branch contaminates its neighbours — so the global Allan distortion need not equal a sum of independently weighted within-cell variances. The surrogate is defensible only when cross-cell covariance vanishes or is explicitly bounded, and supplying that bound is what a covariance-aware algorithm would have to do. Standard interval dynamic programming does not apply directly, because the cost of one cell may depend on the rest of the partition.</p>
+
+          <p>That is the open problem, and it is sharper than the one it replaces: <strong>the optimum encoder is not determined by the distribution of ray delays alone.</strong> It depends on the temporal dynamics of the unresolved branches and on the estimator downstream.</p>
+
+          <h3 id="f5">F.5 The encoder, now universal and actually machine-checked</h3>
+
+          <p>Appendix A verified injectivity for one three-entry literal table. That is superseded. <a href="code/verified/general_chart_encoder.ads">code/verified/</a> contains a parameterized encoder where the chart table is a discriminated record passed as a value, so the contracts quantify over <em>all</em> consistent tables rather than one:</p>
+
+          \[ \texttt{Is\_Consistent}(T)\ \Longrightarrow\ \texttt{Encode}(T,K_1,R_1)=\texttt{Encode}(T,K_2,R_2)\Rightarrow K_1=K_2\wedge R_1=R_2. \]
+
+          <p>Three changes were needed, and each is a defect in the instance form. <strong>First</strong>, the adjacency condition cannot be written with a range ending at <span class="mono">K_Max - 1</span>: with a symbolic <span class="mono">K_Max</span> that expression underflows the index subtype when <span class="mono">K_Max = 0</span>, so the tiling is expressed with a guarded if-expression that never evaluates <span class="mono">Base(K+1)</span> at <span class="mono">K = K_Max</span>. <strong>Second</strong>, the lemmas need bodies — a specification alone proves nothing. <strong>Third</strong>, the monotonicity lemma is load-bearing: it bridges the pairwise identity <span class="mono">Base(J)+Cells(J)=Base(J+1)</span> to an arbitrary gap \(K_1<K_2\), which the solvers will not chain.</p>
+
+          <table class="data-table">
+            <caption>GNATprove 14.1.1, CVC5 / Z3 / Alt-Ergo</caption>
+            <thead><tr><th scope="col">package</th><th scope="col">obligations</th><th scope="col">proved</th><th scope="col">unproved</th></tr></thead>
+            <tbody>
+              <tr><td>released instance (Appendix A)</td><td class="num">47</td><td class="num">44</td><td class="num">0</td></tr>
+              <tr class="is-headline"><td>parameterized (Appendix F)</td><td class="num">97</td><td class="num">93</td><td class="num">0</td></tr>
+            </tbody>
+          </table>
+
+          <p>Removing the inductive body of the monotonicity lemma leaves exactly <em>one</em> unproved obligation — its own postcondition — and the injectivity proof then rests on an unproved callee contract. That confirms the lemma is doing the real work. The exhaustive runtime driver additionally checks bijectivity, arena coverage and decode round trips on four table shapes, including the degenerate single-chart table <span class="mono">K_MAX=0</span> that the instance form could not express, plus five negative controls for gaps, overlaps, short tilings, nonzero origins and empty charts. <span class="ev-badge ev-badge--c">C</span> <span class="ev-badge ev-badge--b">B</span></p>
+
+          <p>That last point is the honest one. Appendix A's "47/47" was true but instance-bound; this is the same claim for a class, and it was checked by running the prover rather than by asserting a transcript. The remaining gap is the covariance-aware objective of F.4, which is where a metrology-aware rate–distortion theory would begin.</p>
 
           <!-- References -->
 <h2 id="references">Bibliography</h2>

@@ -1,0 +1,32 @@
+Summary of SPARK analysis
+=========================
+
+---------------------------------------------------------------------------------
+SPARK Analysis results        Total      Flow      Provers   Justified   Unproved
+---------------------------------------------------------------------------------
+Data Dependencies                 .         .            .           .          .
+Flow Dependencies                 .         .            .           .          .
+Initialization                    2         2            .           .          .
+Non-Aliasing                      .         .            .           .          .
+Run-time Checks                  59         .    59 (CVC5)           .          .
+Assertions                       23         .    23 (CVC5)           .          .
+Functional Contracts             10         .    10 (CVC5)           .          .
+LSP Verification                  .         .            .           .          .
+Termination                       3         2     1 (CVC5)           .          .
+Concurrency                       .         .            .           .          .
+---------------------------------------------------------------------------------
+Total                            97    4 (4%)     93 (96%)           .          .
+
+
+max steps used for successful proof: 11
+
+Analyzed 2 units
+in unit general_chart_encoder, 6 subprograms and packages out of 6 analyzed
+  General_Chart_Encoder at general_chart_encoder.ads:24 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (2 checks)
+  General_Chart_Encoder.Decode at general_chart_encoder.ads:78 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (25 checks)
+  General_Chart_Encoder.Encode at general_chart_encoder.ads:55 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (15 checks)
+  General_Chart_Encoder.Is_Consistent at general_chart_encoder.ads:44 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (8 checks)
+  General_Chart_Encoder.Lemma_Injective at general_chart_encoder.ads:67 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (17 checks)
+  General_Chart_Encoder.Lemma_Monotone at general_chart_encoder.ads:61 flow analyzed (0 errors, 0 checks, 0 warnings and 0 pragma Assume statements) and proved (26 checks)
+in unit test_general, 0 subprograms and packages out of 1 analyzed
+  Test_General at test_general.adb:11 skipped; SPARK_Mode => Off

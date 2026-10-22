@@ -1,0 +1,10 @@
+project General_Chart_Encoder is
+   for Source_Dirs use (".");
+   for Main use ("test_general.adb");
+   package Builder is
+      for Switches ("ada") use ("-gnatwa", "-gnatya");
+   end Builder;
+   package Prove is
+      for Proof_Switches ("ada") use ("--mode=all", "--prover=cvc5,z3,alt-ergo", "--level=2");
+   end Prove;
+end General_Chart_Encoder;
