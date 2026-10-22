@@ -26,7 +26,7 @@
 Geometry, Addressing, and the Limits of a Four-Day Prototype}
 
 \author{Sethurathienam Iyer\thanks{ORCID: 0009-0008-5446-2856.
-Independent work; associated Zenodo records are cited in the bibliography.}\\
+Associated Zenodo records are cited in the bibliography and are self-citations of record.}\\
 ShunyaBar Labs}
 
 \date{October 22, 2026}
@@ -43,8 +43,9 @@ than conventional Cartesian indexing. We derive the geometric conditions under w
 the domain is well posed, show that spatially indexed memory loses ray-branch identity
 at caustics, and formulate the address construction as a multi-chart encoder with
 explicit range and injectivity invariants, released as a verification-ready Ada/SPARK
-specification with a GNATprove transcript (47/47 proof obligations discharged, 0
-unproved, for this encoder instance and its contract structure). Under a fixed hardware
+specification with a GNATprove transcript: 47/47 proof obligations discharged for the
+released three-chart instance, and 97/93 for a parameterised encoder whose contracts
+quantify over \emph{all} consistent chart tables (0 unproved in both). Under a fixed hardware
 budget we formalize cell allocation as a task-aware quantization problem via the law of
 total variance, with calibration-effort costs estimated from finite samples. On a
 released calibrated synthetic model, a chart-legal dynamic-programming partition
@@ -1485,9 +1486,10 @@ Three things remain unsettled, and we state them as specific, testable claims ra
 as failures:
 \begin{enumerate}[label=(\arabic*)]
 \item \textbf{Implementation verification scope.} The released Ada/SPARK
-specification is machine-checked by GNATprove (47/47 proof obligations discharged, 0
-unproved, for the released three-chart encoder instance and its contract structure;
-Appendix \ref{app:ada}), which closes Tier~1 for the released chart table. The chart
+specification is machine-checked by GNATprove (47/47 proof obligations discharged for
+the released three-chart instance; Appendix \ref{app:ada}), and the parameterised encoder
+of Appendix~\ref{app:joint} discharges 97 with 93 proved and 0 unproved for \emph{all}
+consistent tables, which closes Tier~1 for the class rather than the instance. The chart
 table is a three-entry literal, so injectivity holds there by construction; the table
 consistency predicate is not used as any subprogram's precondition, the ghost
 \texttt{Global\_Rank} entry point is an unimplemented stub, and the exhaustive bijection
