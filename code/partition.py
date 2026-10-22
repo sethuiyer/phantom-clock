@@ -12,10 +12,18 @@ Setup (matches the paper):
                      sum of within-cell squared error (exact DP on a
                      1024-point boundary grid).
 
-Held-out distortion is evaluated on the deterministic 20% test split of
-100k rays (see generate.py). Replicated over 30 independent sampling seeds;
-reported: per-seed values, mean, 95% CI (t-interval), and the DP improvement
-ratio with its delta-method CI.
+Held-out distortion is evaluated on the deterministic 20% test split of the
+300,000 generated rays, which yields ~60,000 rays (60,016 +- 223 across the 30
+seeds; 60,170 at seed 0), not 100,000: the split is 80/20, so a 100,000-ray
+held-out set is unreachable from 300,000 rays. N_TEST below is therefore a cap
+that never binds, and it is asserted as such so truncation can never be silent.
+Training uses the first 200,000 of the ~240,000 available training rays.
+
+Replicated over 30 independent sampling seeds; reported: per-seed values, mean,
+95% CI (t-interval), and the DP improvement ratio with its delta-method CI.
+
+Supporting analysis -- budget scaling, controls, the analytic partition, and
+the address cost of chart legality -- is in scaling.py.
 """
 import argparse
 import csv
@@ -25,7 +33,10 @@ import numpy as np
 from generate import make_rays, split
 
 K = 64
-N_TRAIN, N_TEST = 200_000, 100_000
+N_TRAIN = 200_000      # used, from the ~240,000-ray training pool
+N_TEST = 100_000       # a CAP, not a target: the 80/20 hash split yields ~60,000
+# Pool size must stay 300,000 to preserve the released RNG stream and numbers.
+N_TOTAL = 300_000
 GRID = 1024
 
 
@@ -85,8 +96,12 @@ def distortion(cells, edges, t, d):
 
 
 def run(seed):
-    theta, branch, dly = make_rays(N_TRAIN + N_TEST, seed)
+    theta, branch, dly = make_rays(N_TOTAL, seed)
     tr, te = split(theta, branch)
+    # The test pool is smaller than N_TEST by construction, and we want all of
+    # it; assert both caps so a future change can never truncate silently.
+    assert te.sum() <= N_TEST, "test pool unexpectedly exceeds the cap"
+    assert tr.sum() >= N_TRAIN, "training pool too small for N_TRAIN"
     th_tr, d_tr = theta[tr][:N_TRAIN], dly[tr][:N_TRAIN]
     th_te, d_te = theta[te][:N_TEST], dly[te][:N_TEST]
 

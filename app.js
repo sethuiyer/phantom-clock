@@ -549,3 +549,112 @@ if (document.fonts && document.fonts.ready) {
 } else {
   window.addEventListener("load", settleHash);
 }
+
+/* ---------------------------------------------------------------- narration
+   A narrated intro for the essay. One <audio> element, two trigger buttons
+   (hero chip + dock), a seek bar, and a compact dock that follows you while
+   you read. No autoplay: the reader starts it. */
+
+(() => {
+  "use strict";
+
+  const audio = document.querySelector("[data-audio-el]");
+  const dock = document.querySelector("[data-audio-dock]");
+  if (!audio || !dock) return;
+
+  const toggles = [...document.querySelectorAll("[data-audio-toggle]")];
+  const heroLabel = document.querySelector("[data-audio-label]");
+  const durationEl = document.querySelector("[data-audio-duration]");
+  const seek = document.querySelector("[data-audio-seek]");
+  const timeEl = document.querySelector("[data-audio-time]");
+  const close = document.querySelector("[data-audio-close]");
+
+  const clock = (s) => {
+    if (!Number.isFinite(s)) return "0:00";
+    const m = Math.floor(s / 60);
+    return `${m}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  };
+
+  // The hero chip carries visible text, so it needs no aria-label; the dock
+  // button is icon-only and does.
+  const setPressed = (playing) => {
+    toggles.forEach((b) => {
+      b.setAttribute("aria-pressed", String(playing));
+      if (b.hasAttribute("data-audio-dock-toggle")) {
+        b.setAttribute("aria-label", playing ? "Pause narration" : "Play narration");
+      }
+    });
+  };
+
+  const sync = () => {
+    const d = audio.duration;
+    const t = audio.currentTime;
+    setPressed(!audio.paused);
+    if (heroLabel) {
+      heroLabel.textContent = audio.paused
+        ? "Listen to the narrated intro"
+        : "Playing the narrated intro";
+    }
+    if (durationEl && Number.isFinite(d)) durationEl.textContent = clock(d);
+    if (timeEl) timeEl.textContent = `${clock(t)} / ${clock(d)}`;
+    if (seek && d) {
+      if (document.activeElement !== seek) {
+        seek.value = String(Math.round((t / d) * 1000));
+      }
+      seek.style.setProperty("--pct", `${(t / d) * 100}%`);
+    }
+  };
+
+  const play = () => {
+    dock.hidden = false;
+    audio.play().catch(() => {
+      /* Autoplay policy or a missing file: fall back silently. */
+      dock.hidden = true;
+    });
+  };
+
+  toggles.forEach((btn) =>
+    btn.addEventListener("click", () => {
+      if (audio.paused) play();
+      else audio.pause();
+    }),
+  );
+
+  seek?.addEventListener("input", () => {
+    if (audio.duration) audio.currentTime = (seek.value / 1000) * audio.duration;
+  });
+
+  close?.addEventListener("click", () => {
+    audio.pause();
+    audio.currentTime = 0;
+    dock.hidden = true;
+  });
+
+  // Finish cleanly: rewind, reset the chip, dismiss the dock.
+  audio.addEventListener("ended", () => {
+    audio.currentTime = 0;
+    dock.hidden = true;
+  });
+
+  ["play", "pause", "timeupdate", "loadedmetadata", "ended"].forEach((ev) =>
+    audio.addEventListener(ev, sync),
+  );
+
+  // Pause while the tab is hidden — nobody wants narration from a background tab.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && !audio.paused) audio.pause();
+  });
+
+  // Keyboard: space toggles when the reader is not typing in the search box.
+  document.addEventListener("keydown", (e) => {
+    if (e.code !== "Space" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t instanceof HTMLElement &&
+        (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName))) return;
+    e.preventDefault();
+    if (audio.paused) play();
+    else audio.pause();
+  });
+
+  sync();
+})();

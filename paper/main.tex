@@ -1,0 +1,1796 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{obligation}{Proof Obligation}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\xv}{\mathbf{x}}
+\newcommand{\pv}{\mathbf{p}}
+\newcommand{\uv}{\mathbf{u}}
+\newcommand{\Mopt}{\mathcal{M}_{\omega_0}}
+
+\title{Chart-Aware Contiguous Memory for Discretized Optical Phase Space:\\
+Geometry, Addressing, and the Limits of a Four-Day Prototype}
+
+\author{Sethurathienam Iyer\thanks{ORCID: 0009-0008-5446-2856.
+Independent work; associated Zenodo records are cited in the bibliography.}\\
+BITS Pilani, Goa Campus, Sancoale, India}
+
+\date{October 22, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop a chart-aware, contiguous-memory architecture for discretized optical
+phase space, separating ray dynamics, measurement observables, geometric
+discretization, and address correctness. A progressively ellipsoidal optical domain
+motivates the use of Hamiltonian characteristics and local phase-space charts rather
+than conventional Cartesian indexing. We derive the geometric conditions under which
+the domain is well posed, show that spatially indexed memory loses ray-branch identity
+at caustics, and formulate the address construction as a multi-chart encoder with
+explicit range and injectivity invariants, released as a verification-ready Ada/SPARK
+specification with a GNATprove transcript (47/47 proof obligations discharged, 0
+unproved, for this encoder instance and its contract structure). Under a fixed hardware
+budget we formalize cell allocation as a task-aware quantization problem via the law of
+total variance, with calibration-effort costs estimated from finite samples. On a
+released calibrated synthetic model, a chart-legal dynamic-programming partition
+improves held-out timing distortion by $\mathbf{1.75\times}$ over uniform angular binning
+($4.230\times10^{-4}$ vs $2.423\times10^{-4}$; ratio $1.746\pm0.005$ at 95\% CI, 30
+sampling seeds). We report controls that bound what this number means: the gain falls
+from $2.41\times$ to $1.51\times$ as the budget grows from $K=16$ to $K=256$; a single
+smooth delay law with no two-regime structure already gives $1.50\times$; and because
+the delay law is known in closed form, analytic quadrature matches the sample-estimated
+partition to $0.07\%$. We further price the chart-legal constraint by computing what it
+forbids: optimizing the scalar observable alone reaches $10.6\times$ lower distortion,
+but its cells fragment into $91$ angular runs against $32$, so it is not
+representable at equal address cost. Chart legality is therefore an
+address-structure cost, not a moral one, and topology, identity, address count,
+calibration, and distortion are coupled resources. Synthetic experiments demonstrate
+that a spatial-only representation can manufacture apparent timing fluctuations by
+merging distinct ray branches at a caustic, and that finite-resolution phase-space
+representation converts between-branch variance into within-cell variance by an exactly
+quantifiable identity.
+The generator, split rule, partition code, and chart table are released so that these
+figures are reproducible. We state the limits of what can be established in four days:
+machine-checked verification of the complete encoder beyond the released
+specification, broadband propagation accuracy, geometric approximation quality, and
+metrological benefit remain explicit validation obligations.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}\label{sec:intro}
+
+Consider an intern tasked with designing a memory structure for measurements that live
+in three spatial dimensions and two rotational dimensions, occupying a volume whose
+geometry becomes progressively more elliptical toward the boundary, with contiguous
+storage, in Ada, for detecting femtosecond-scale fluctuations in an atomic clock---on a
+four-day deadline. Every noun in this assignment conceals another discipline: memory
+conceals topology, ellipsoid conceals differential geometry, optics conceals
+Hamiltonian mechanics, femtosecond conceals precision metrology, and Ada conceals
+formal verification.
+
+The purpose of this paper is not to discover a new clock. It is to explain why a wrong
+memory layout can invent one. The surprising central idea is that the correct memory
+addresses may need to follow the geometry of light propagation, rather than the
+coordinates occupied by matter. The central claim is not that a five-dimensional array
+is better than a three-dimensional array. It is that the optimal representation is not
+the one that stores the fewest coordinates or minimizes a single timing error; it is
+the least expensive representation that preserves every distinction the instrument may
+need to make.
+
+\subsection{The design problem, formally}\label{sec:problem}
+
+The paper's main technical contribution can be stated as a single constrained
+optimization problem before any of its components are derived. Let $Q$ be an optical
+state drawn from the instrument's operating distribution $\mu$ on the fixed-frequency
+manifold $\Mopt$; let $T_g(Q)$ be its group-delay correction; and let
+$B_{\mathcal{P}}(Q)$ denote the cell of a partition $\mathcal{P}=\{C_1,\ldots,C_K\}$
+containing $Q$. The design problem is
+\begin{equation}
+\boxed{
+\begin{aligned}
+\min_{\mathcal{P},\{m_k\}} \quad
+& \mathbb{E}\!\left[\operatorname{Var}\!\left(T_g(Q)\mid B_{\mathcal{P}}(Q)\right)\right]
+  + \sum_{k=1}^{K} \frac{p_k v_k}{m_k} \\[2pt]
+\text{subject to}\quad
+& |\mathcal{P}| \le K_{\max}, \\
+& \textstyle\sum_{k=1}^{K} m_k \le M, \\
+& \text{each cell has one canonical chart owner and one address,} \\
+& \text{addresses are contiguous and collision-free (Theorem~\ref{thm:injective}),} \\
+& \text{required ray-branch distinctions are preserved (Theorem~\ref{thm:branchcost}),} \\
+& \text{the chart table is frozen per acquisition batch,}
+\end{aligned}}
+\end{equation}
+where $p_k=\mathbb{P}(Q\in C_k)$, $v_k=\operatorname{Var}(T_g\mid C_k)$, $K_{\max}$ is
+the address budget, and $M$ is the calibration budget. The objective's first term is
+the geometric distortion resolved by the partition (exactly decomposed by the law of
+total variance, \S\ref{sec:rate-distortion}); the second is the statistical cost of
+estimating each cell's correction from $m_k$ calibration samples. The constraints
+encode the architectural requirements that are not tradeable: representation
+correctness (contiguity, uniqueness, frozen versioning) and preservation of the
+optical distinctions the measurement needs. Everything that follows---the manifold
+geometry, the encoder, the rate-distortion analysis, and the experiments---is in
+service of this problem. Making it explicit up front also makes the paper's central
+claim precise: the optimum is not the partition that minimizes timing distortion
+alone; it is the cheapest partition in the feasible set.
+
+\subsection{Evidence taxonomy}\label{sec:taxonomy}
+
+Throughout, we keep three kinds of evidence distinct, because confusing them is how
+prototypes become folklore.
+\begin{enumerate}[label=(\Alph*)]
+\item \textbf{Mathematical identities.} Proved: Snell's law from Fermat's principle,
+the law of total variance, the range bound of the encoder.
+\item \textbf{Synthetic numerical results.} Demonstrated under stated models with
+stated sample sizes. These are not physical atomic-clock measurements; they establish
+failure modes in controlled settings.
+\item \textbf{Formally verified implementation claims.} These require a proof
+transcript, e.g.\ a GNATprove transcript. \emph{A transcript is presented in
+Appendix~\ref{app:ada} for the released encoder, its chart table, and its contract
+structure only.} Exhaustive enumeration of a concrete chart table is evidence for that
+table only; it is not a general proof, and the general statement remains
+Theorem~\ref{thm:injective}.
+\end{enumerate}
+When we say ``proved'' we mean (A); when we say ``the simulation shows'' we mean (B);
+when we say ``we have not proved,'' category (C) is missing. This distinction is the
+paper's immune system.
+
+\subsection{Related work}\label{sec:related}
+
+The architectural roots of this problem are cross-disciplinary.
+\emph{Optics and mechanics:} Fermat's principle and the eikonal equation are treated
+authoritatively by Born and Wolf~\cite{bornwolf1999}; Hamiltonian characteristics,
+phase-space flows, symplectic geometry, and Liouville's theorem by
+Arnold~\cite{arnold1989}; caustics, singular ray projections, and Airy/Pearcey
+catastrophe optics by Berry and Upstill~\cite{berry1980,pearcey1946,airy1841}; and the
+contact-geometric structure of the fixed-frequency hypersurface by
+Geiges~\cite{geiges2008}.
+\emph{Metrology:} the statistics of atomic frequency standards under noise perturbations
+whose character depends on sampling time are due to Allan~\cite{allan1966}; this grounds
+the measurement model of \S\ref{sec:measurement} and the spectral diagnosis proposed in
+\S\ref{sec:extensions}.
+\emph{Information theory:} Shannon's coding theorems with a fidelity criterion provide the
+rate-distortion foundation~\cite{shannon1959}; Lloyd~\cite{lloyd1982} and Max~\cite{max1960}
+establish optimal scalar quantization; Gray and Neuhoff~\cite{gray1998} connect quantization,
+distortion, resolution, and coding rate; and Misra, Goyal, and Varshney~\cite{misra2011} study
+quantizers designed to minimize the error of a \emph{computed function}---the closest
+established literature to our task-aware timing objective, with branch constraints and
+calibration costs specifying the optical specialization. Stone~\cite{stone1982} supplies the
+nonparametric estimation rates underlying the $M^{1/3}$ scaling law of
+Theorem~\ref{thm:threshold}.
+\emph{Optimization and verification:} the inverse-Hessian sensitivity of
+Theorem~\ref{thm:dispersion} is an application of perturbation analysis of parameterized
+optimization~\cite{bonnans2000}; and SPARK's contract-based verification methodology is
+codified by McCormick and Chapin~\cite{mccormick2015}.
+The paper also builds on the author's prior computational frameworks---physics-informed
+combinatorial solvers using spectral, topological, and arithmetic methods
+\cite{nitrosat,multiplicative,shunyabar,banzhaf,spectralmult,quantumvacuum}, sharing the
+theme of phase-transition detection and branch-aware optimization---and earlier applied work
+on content-based retrieval~\cite{imagecaptioning}; these are self-citations of record used
+for context only, not as evidence of type (A), (B), or (C).
+
+\subsection{Contributions}
+
+\begin{enumerate}[label=(\roman*)]
+\item A geometric model of progressively ellipsoidal domains with explicit nesting
+conditions (\S\ref{sec:domain}), and the observation that compactness is a storage
+property while locality is a geometric property, which are not interchangeable
+(\S\ref{sec:arrays}).
+\item Derivation of the optical state space from Fermat's principle, the eikonal
+equation, and Hamiltonian characteristics; identification of caustics as the failure of
+\emph{spatial} invertibility, not of ray dynamics (\S\ref{sec:fermat}--\S\ref{sec:phase-space}).
+\item A chart-aware contiguous encoder with explicit range and injectivity obligations,
+including the distinction between the two (\S\ref{sec:addressing}, \S\ref{sec:ada}),
+released as a verification-ready specification with a GNATprove transcript
+(Appendix~\ref{app:ada}).
+\item Phase-versus-group-delay separation: the state manifold is generated by the phase
+dispersion relation, while group delay is a different observable computed along its
+rays (\S\ref{sec:femto}).
+\item A task-aware rate-distortion formulation of cell allocation under memory and
+calibration budgets (\S\ref{sec:rate-distortion}), and five synthetic experiments
+demonstrating concrete failure modes, including a false clock manufactured by spatial
+projection (\S\ref{sec:experiments}).
+\item An explicit statement of what remains unproved: the SPARK transcript, the
+geometric preprocessing quality, and the metrological benefit
+(\S\ref{sec:limits}).
+\end{enumerate}
+
+\section{Why an ordinary array is the wrong starting point}\label{sec:arrays}
+
+A conventional multidimensional array is a convenient interpretation of linear memory.
+Let
+\begin{equation}
+(i,j,k), \qquad 0 \le i < N_x, \quad 0 \le j < N_y, \quad 0 \le k < N_z.
+\end{equation}
+A row-major representation uses
+\begin{equation}
+A(i,j,k) = (iN_y + j)N_z + k.
+\end{equation}
+This is simple, collision-free, and invertible. Adding two angular coordinates
+discretized into $N_\theta$ and $N_\phi$ bins yields
+\begin{equation}
+A(i,j,k,p,q) = ((((iN_y+j)N_z+k)N_\theta+p)N_\phi+q.
+\end{equation}
+Five dimensions have become one integer. Problem solved? Not remotely.
+
+This formula assumes that the logical domain is a Cartesian product
+$X \times Y \times Z \times \Theta \times \Phi$. But an ellipsoidal volume is not a
+rectangular box, and a progressively deforming ellipsoidal volume is not naturally
+described by uniformly sampled Cartesian slices. Allocating the bounding box wastes
+memory outside the valid domain; enumerating valid lattice points with consecutive
+ranks saves memory but does not guarantee that neighboring optical states are stored
+near one another.
+
+A \emph{compact address map} answers: can I store every admissible state without
+wasting addresses? An optical memory architecture must answer a harder question: can I
+store states so that the geometry relevant to the measurement survives discretization?
+Compactness is a storage property; locality is a geometric property. They are not
+interchangeable.
+
+Consider two measurements that are close in Euclidean space but arrive along different
+ray branches with very different propagation delays. A compact spatial rank puts them
+together; an optical memory that cares about timing should not necessarily. Conversely,
+two measurements far apart in space but sharing the same group delay may be natural
+comparison partners for timing analysis; a spatial layout separates them. The intern's
+first mistake would be to make the array small rather than faithful.
+
+\section{A progressively elliptical domain}\label{sec:domain}
+
+Introduce a normalized radial parameter $0 \le \rho \le 1$ and a unit direction
+$\uv \in S^2$. Define
+\begin{equation}
+\xv(\rho,\uv) = \rho
+\begin{pmatrix} a(\rho) & 0 & 0 \\ 0 & b(\rho) & 0 \\ 0 & 0 & c(\rho) \end{pmatrix}
+\uv,
+\qquad
+a(\rho) = 1 + \alpha\rho^2, \quad b(\rho) = 1, \quad c(\rho) = 1 - \beta\rho^2,
+\end{equation}
+with restrictions
+\begin{equation}
+\boxed{\alpha > 0, \qquad 0 < \beta < \tfrac13.}
+\end{equation}
+These are not cosmetic. The semiaxes of the shell at radial parameter $\rho$ are
+\begin{equation}
+s_x(\rho) = \rho + \alpha\rho^3, \qquad s_y(\rho) = \rho, \qquad s_z(\rho) = \rho - \beta\rho^3.
+\end{equation}
+For the ellipsoids to remain nested, their semiaxes must increase with $\rho$.
+
+\begin{proposition}[Nesting]\label{prop:nesting}
+For $\alpha > 0$ and $0 < \beta < 1/3$, the family
+$\{\mathbf{E}_\rho\}_{0 \le \rho \le 1}$ is strictly nested: each shell encloses the
+preceding one, and the construction extends continuously to the center, where the
+shell at $\rho=0$ degenerates to a point.
+\end{proposition}
+\begin{proof}
+Differentiate: $\frac{ds_x}{d\rho} = 1 + 3\alpha\rho^2 > 0$,
+$\frac{ds_y}{d\rho} = 1 > 0$, and $\frac{ds_z}{d\rho} = 1 - 3\beta\rho^2 > 0$, the
+final inequality following from $\beta < 1/3$. Strictly increasing semiaxes imply each
+shell is interior to the next.
+\end{proof}
+
+Near the center the three axes are approximately equal; near the boundary their ratios
+differ. We have a family of increasingly elliptical shells.
+
+However, this is only a geometric model. It does not establish that light propagates
+along those shells, or that the shells are surfaces of equal optical travel time. To
+determine that, we need optics---and a seventeenth-century mathematician enters the
+data-structure design meeting.
+
+\section{Fermat's principle as an address generator}\label{sec:fermat}
+
+Fermat's principle states that physical rays follow paths for which optical travel time
+is stationary under suitable variations~\cite{fermat1662,bornwolf1999}. For a
+refractive-index field $n(\xv)$, the travel-time functional is
+\begin{equation}
+\mathcal{T}[\gamma] = \frac1c \int_\gamma n(\xv)\, d\ell,
+\end{equation}
+where $\ell$ is physical arc length. A physical ray satisfies
+$\delta\mathcal{T} = 0$; ``stationary'' is more precise than ``minimum,'' since a ray
+path need not be a strict global minimum.
+
+Why should a memory engineer care? Because the device is not primarily interested in
+where a measurement sits in Euclidean space; it is interested in the phase and arrival
+time of optical information. Two spatially nearby measurements can have different
+propagation delays; two spatially distant measurements can share the same optical
+phase or travel-time surface.
+
+Introduce a phase-travel-time field $T_p(\xv)$. For isotropic geometric optics at a
+fixed frequency, away from singularities, it satisfies the eikonal equation:
+\begin{equation}
+\boxed{\left|\nabla T_p(\xv)\right|^2 = \frac{n_p^2(\xv,\omega_0)}{c^2}.}
+\end{equation}
+The level sets $\Sigma_\tau = \{\xv : T_p(\xv) = \tau\}$ are equal-phase wavefronts at
+the chosen frequency. The memory problem now changes character: instead of asking which
+Cartesian cells belong inside an ellipsoid, we ask which optical states belong to each
+propagation-related layer. If the actual optical medium produces increasingly
+elliptical wavefronts, the resulting memory organization can reflect that deformation.
+
+\begin{remark}
+The conditional matters: progressive ellipticity must come from the optical model or
+measured calibration data. Fermat's principle does not guarantee it. Using optical
+propagation geometry as an organizing principle, rather than treating the ellipsoidal
+boundary as a Boolean mask, is our first architectural improvement---and it creates a
+new problem: what happens when two rays arrive at the same place?
+\end{remark}
+
+\subsection{The Cauchy problem, or why rays refuse to behave like array indices}
+
+Specify an initial wavefront with its initial phase and propagation directions; this is
+a Cauchy problem for subsequent propagation. The eikonal equation belongs to the
+Hamilton--Jacobi family~\cite{arnold1989,gevay2011}; its characteristic curves derive
+from a Hamiltonian. Fix the
+optical frequency and suppress it from the notation. Define
+\begin{equation}
+H(\xv,\pv) = \frac12 \left( |\pv|^2 - \frac{n_p^2(\xv)}{c^2} \right).
+\end{equation}
+Optical rays lie on $H = 0$ and evolve by Hamilton's equations:
+\begin{align}
+\frac{d\xv}{ds} &= \frac{\partial H}{\partial \pv} = \pv,\\
+\frac{d\pv}{ds} &= -\frac{\partial H}{\partial \xv} = \frac{n_p(\xv)}{c^2} \nabla n_p(\xv),
+\end{align}
+where $s$ is a characteristic parameter, not physical time. On $H=0$,
+$|\pv| = n_p/c$, hence $\left|d\xv/ds\right| = n_p/c$ and $ds = (c/n_p)\,d\ell$, giving
+\begin{equation}
+\boxed{s - s_0 = c \int_{\ell_0}^{\ell} \frac{d\ell'}{n_p(\ell')}.}
+\end{equation}
+This parameter is neither physical time nor optical travel time
+$T_p = \int \frac{n_p}{c}\, d\ell$; its normalization changes traversal speed but not
+the geometric ray trajectory.
+
+Given an initial wavefront parameterized by $(u,v)$, the ray family $\xv(s,u,v)$
+locally provides three coordinates for three-dimensional space. That looks promising.
+Unfortunately, nature has invented caustics.
+
+\subsection{The caustic problem}
+
+When sunlight passes through a glass of water, bright curves appear on the table
+because neighboring rays concentrate. Mathematically, the map
+$(s,u,v) \mapsto \xv(s,u,v)$ may cease to be locally invertible. Define the Jacobian
+\begin{equation}
+J = \det \left[ \frac{\partial \xv}{\partial s},\;
+\frac{\partial \xv}{\partial u},\; \frac{\partial \xv}{\partial v} \right].
+\end{equation}
+
+\begin{proposition}[Caustic signature]\label{prop:caustic}
+The spatial ray-coordinate map loses local invertibility exactly where $J = 0$.
+\end{proposition}
+\begin{proof}
+Immediate from the inverse function theorem: local invertibility of the parametrization
+requires a nonsingular Jacobian matrix.
+\end{proof}
+
+The key observation: the rays themselves need not cease to exist. What fails is our
+attempt to identify a ray using spatial position alone. Suppose two rays reach the same
+spatial point, $\xv_1 = \xv_2$; they can still have different momenta,
+$\pv_1 \ne \pv_2$. A spatial-only address merges them. An optical state-space address
+can keep them separate. This is why the two rotational degrees of freedom in the
+original specification are potentially far more important than they first appear: they
+can encode the propagation direction that distinguishes ray branches.
+
+\section{The five-dimensional escape hatch}\label{sec:phase-space}
+
+In ordinary Hamiltonian mechanics, a particle in three-dimensional space has a
+six-dimensional phase space $(x,y,z,p_x,p_y,p_z)$. In our isotropic fixed-frequency
+optical model, the Hamiltonian constraint determines the magnitude of optical momentum,
+\begin{equation}
+|\pv| = \frac{n_p(\xv,\omega_0)}{c},
+\end{equation}
+leaving only its direction free. A direction in three dimensions requires two angular
+coordinates:
+\begin{equation}
+\pv = \frac{n_p(\xv,\omega_0)}{c}
+\begin{pmatrix} \sin\theta\cos\phi \\ \sin\theta\sin\phi \\ \cos\theta \end{pmatrix}.
+\end{equation}
+We arrive at the boxed state tuple
+\begin{equation}
+\boxed{(x,y,z,\theta,\phi)}
+\end{equation}
+---three spatial dimensions, two rotational dimensions---exactly the five degrees of
+freedom from the assignment, under the interpretation that the rotations are
+propagation directions. This is the most natural reading for fixed-frequency
+propagation in an isotropic medium, but not the only physical interpretation: a
+polarization-frame orientation or an aperture sampling scheme could introduce different
+angular variables. Our construction specifically uses propagation direction because it
+distinguishes intersecting ray branches.
+
+The natural mathematical object is the fixed-frequency constraint manifold
+\begin{equation}
+\Mopt = \left\{ (\xv,\pv) : |\pv| = \frac{n_p(\xv,\omega_0)}{c} \right\}.
+\end{equation}
+
+\begin{proposition}\label{prop:manifold}
+For a smooth positive refractive index $n_p$, $\Mopt$ is a five-dimensional manifold,
+and the projection $\pi:\Mopt \to \R^3$ may fail to distinguish distinct states: two
+rays can occupy the same spatial point but remain distinct points of $\Mopt$ because
+their directions differ.
+\end{proposition}
+\begin{proof}
+$F(\xv,\pv) = |\pv|^2 - n_p(\xv,\omega_0)^2/c^2$ satisfies
+$\partial_{\pv} F = 2\pv \neq 0$ on $F=0$ (since $n_p>0$ forces $|\pv|>0$), so the
+regular level set theorem applies in the six-dimensional ambient space, yielding
+dimension $5$. The failure of $\pi$ to be injective is witnessed by any pair
+$(\xv,\pv_1)\neq(\xv,\pv_2)$ with $|\pv_i| = n_p(\xv,\omega_0)/c$ and $\pv_1 \neq\pv_2$,
+which exists whenever $\xv$ admits two distinct propagation directions.
+\end{proof}
+
+\begin{remark}[Why multiple charts]\label{rem:charts}
+A five-dimensional coordinate chart is not globally nonsingular: angular coordinates
+have poles and seams, and complicated geometry may require multiple charts. Nor is
+every ray branch uniquely identified by quantized position and direction: distinct
+samples can occupy the same discrete cell, requiring additional sample sequence or
+branch identity. Nevertheless the correct basic representation has emerged: store
+optical states on the constrained phase-space manifold, rather than storing spatial
+cells and attaching orientation as an afterthought.
+\end{remark}
+
+\section{Constructing the contiguous address space}\label{sec:addressing}
+
+We want a single memory arena $M_0, M_1, \ldots, M_{N-1}$---no giant five-dimensional
+rectangular allocation. Instead, construct a finite partition of the admissible optical
+state manifold into cells $C_0, C_1, \ldots, C_{N-1}$, each representing a small region
+of position--direction space. The encoder is a map
+\begin{equation}
+E : \mathcal{M}_{\mathrm{discrete}} \rightarrow \{0,\ldots,N-1\}.
+\end{equation}
+We require \emph{uniqueness} ($E(q_1)=E(q_2) \implies q_1=q_2$ for canonical discrete
+cell identities), \emph{coverage} (every admitted cell has an address), \emph{stability}
+(the map remains well-defined near caustics and deformed boundaries), and, where
+practical, \emph{geometric locality} (optically nearby states occupy nearby addresses).
+The last requirement is an optimization objective, not a consequence of compact
+indexing.
+
+\subsection{Multiple optical charts}
+
+A single global chart is fragile. Divide the manifold into local patches and assign each
+physical cell a canonical chart owner. For each chart $k$, store its base offset $B_k$,
+cell count $N_k$, calibration version, and mapping from canonical cell identities to
+local ranks. Define
+\begin{equation}
+\boxed{E(k,r) = B_k + r, \qquad 0 \le r < N_k,}
+\end{equation}
+with consecutive intervals $B_0 = 0$, $B_{k+1} = B_k + N_k$. This produces contiguous
+storage without gaps. Charts may overlap geometrically, but their canonical ownership
+must not, or the same logical cell could acquire multiple addresses.
+
+There is also a crucial distinction between unique cells and unique continuous states:
+finite digital storage identifies quantized cells, not every real-valued point inside
+them, and the quantization error must be bounded relative to the measurement
+requirements.
+
+\subsection{The address budget does not survive refinement unchanged}
+
+A caustic warns that the spatial projection becomes singular; it does not automatically
+mean every nearby cell must be refined. Refinement is justified where an error
+estimator, ray-branch separation criterion, or measurement sensitivity requires it. And
+refinement is not free: with a fixed address budget, allocating more cells near a
+difficult region reduces the budget available elsewhere. Two failure modes follow.
+First, smooth regions become under-resolved, potentially corrupting timing analysis
+where the system was expected to behave quietly. Second, allocation becomes
+calibration-dependent: two runs with different optical configurations may generate
+different chart tables, changing what a given address means---a reproducibility hazard
+disguised as a memory optimization.
+
+The four-day compromise: fix the global cell budget, allocate it by a documented rule,
+freeze the resulting chart table during acquisition, and record its version with every
+measurement batch. Changing the allocation rule is a change to the instrument, not
+merely a software optimization.
+
+\section{Why Ada suddenly makes sense}\label{sec:ada}
+
+At this point a conventional programmer might say, ``Fine, let's put everything in a
+hash table.'' The senior infrastructure engineer asks more unpleasant questions: can you
+prove the encoder never produces an invalid address? Can you prove two distinct
+canonical cells never alias? What happens when an interrupt arrives during a
+geometry-table update?
+
+Now Ada becomes interesting. Ada offers strong typing, constrained ranges, and
+contracts~\cite{barnes2012}; SPARK, its formally analyzable subset, can establish
+selected program properties~\cite{spark2014,mccormick2015}. For precision instrumentation this matters
+because a silent indexing error can produce a plausible but physically meaningless
+measurement. We do not merely want the program to avoid crashing; we want it to avoid
+silently turning one optical state into another.
+
+\subsection{The encoder's proof obligations}
+
+Assume an offline geometry preprocessor has constructed canonical charts and assigned
+local ranks. The essential range obligation is easy to understand. We need
+$B_k + r < N$ for every valid rank $r$. Given $B_k + N_k \le N$, we obtain
+$B_k + r < B_k + N_k \le N$, so the address is in bounds.
+
+\begin{obligation}[Range bound]
+For all valid chart identifiers $k$ and ranks $0 \le r < N_k$:
+$B_k + r < N$.
+\end{obligation}
+
+But range safety is not injectivity.
+
+\begin{theorem}[Injectivity]\label{thm:injective}
+If the chart intervals $[B_k, B_k+N_k)$ are pairwise disjoint, then $E(k,r) = B_k + r$
+is injective on $\{(k,r) : 0 \le r < N_k\}$; if the intervals additionally cover the
+complete address range consecutively, $E$ is a bijection onto that range.
+\end{theorem}
+\begin{proof}
+Suppose $E(i,r) = E(j,s)$. If $i \ne j$, disjoint intervals make equality impossible,
+so $i=j$; then $B_i + r = B_i + s$ implies $r=s$. Surjectivity follows from the
+consecutive-covering hypothesis by induction over the interval sequence.
+\end{proof}
+
+\begin{remark}
+These are two related but distinct proof obligations. The range bound concerns a single
+call to \texttt{Encode}; injectivity compares arbitrary pairs of valid inputs and is a
+\emph{relational} property requiring its own proof, whether by a mathematical argument
+or a SPARK ghost lemma. The released specification (Appendix~\ref{app:ada}) supplies
+the invariant structure, and its GNATprove transcript discharges all 47 obligations
+with no unproved checks: range safety, initialization, and the functional contracts of
+\texttt{Encode}, \texttt{Decode}, and the ghost injectivity lemma. This machine-checked
+result applies to the released chart table and contract structure; it is not claimed
+for arbitrary chart tables or for the geometry preprocessor, and the general statement
+remains the mathematical Theorem~\ref{thm:injective}.
+
+There is also a deeper missing proof: nothing in this encoder establishes that the
+geometry preprocessor constructed the correct optical partition. The solver establishes
+what the cells mean; the verification-ready encoder establishes where they live; the
+acquisition pipeline establishes which measurements belong to them. Keeping these
+responsibilities separate is what makes the system auditable. Formal verification is
+not a property of the author's intentions; it is a claim that must survive actual proof
+obligations---which is why the transcript is released alongside the specification.
+\end{remark}
+
+\section{The IIT-JEE-style mathematical hammer}\label{sec:hammer}
+
+We temporarily forget the terminology and attack the central ideas with calculus,
+vectors, and algebra.
+
+\subsection{Deriving Snell's law from Fermat's principle}
+
+Light travels from point $A$ in a medium of refractive index $n_1$ to point $B$ in a
+medium of index $n_2$, through a horizontal interface. Let $h_1,h_2$ be the perpendicular
+distances, $L$ the horizontal separation, and $x$ the crossing coordinate. Travel time:
+\begin{equation}
+T(x) = \frac{n_1}{c}\sqrt{x^2+h_1^2} + \frac{n_2}{c}\sqrt{(L-x)^2+h_2^2}.
+\end{equation}
+Differentiating and setting to zero:
+\begin{equation}
+\frac{n_1 x}{\sqrt{x^2+h_1^2}} = \frac{n_2(L-x)}{\sqrt{(L-x)^2+h_2^2}},
+\end{equation}
+and recognizing $\sin\theta_1 = \frac{x}{\sqrt{x^2+h_1^2}}$,
+$\sin\theta_2 = \frac{L-x}{\sqrt{(L-x)^2+h_2^2}}$:
+\begin{equation}
+\boxed{n_1 \sin\theta_1 = n_2 \sin\theta_2.}
+\end{equation}
+Snell's law appears directly from stationary travel time. The lesson: physically
+meaningful trajectories arise from the optical variational principle, and a programmer's
+coordinate grid has no reason to respect those trajectories automatically.
+
+\subsection{Why a caustic destroys spatial invertibility}
+
+Consider the two-dimensional toy family of rays
+\begin{equation}
+x(t,u) = u(1-t), \qquad y(t,u) = t,
+\end{equation}
+where $u$ labels the initial ray and $t$ parameterizes its evolution. At $t=1$,
+$x(1,u)=0$ for every $u$: all rays meet at $(0,1)$. The Jacobian is
+\begin{equation}
+J = \det \begin{pmatrix} \partial_t x & \partial_u x \\ \partial_t y & \partial_u y \end{pmatrix}
+= \det \begin{pmatrix} -u & 1-t \\ 1 & 0 \end{pmatrix} = t-1,
+\qquad \boxed{J = 0 \text{ at } t=1.}
+\end{equation}
+The inverse mapping fails precisely at the focus: away from $t=1$,
+$u = \frac{x}{1-y}$, whose denominator vanishes at $y=1$. This is a mathematical failure
+of the coordinates, not a floating-point accident. Now examine the ray tangent
+$\frac{\partial(x,y)}{\partial t} = (-u,1)$: at the focus, rays with different $u$ have
+different directions. Their spatial positions coincide, but their lifted
+position--direction states remain distinguishable---which is why storing orientation
+alongside position preserves information that a spatial address loses.
+
+\subsection{Quantifying the danger of a progressively elliptical boundary}
+
+Return to the parametrization of \S\ref{sec:domain}:
+$x = \rho(1+\alpha\rho^2)u_x$, $y = \rho u_y$, $z = \rho(1-\beta\rho^2)u_z$. Along the
+positive $x$-axis, $x(\rho) = \rho + \alpha\rho^3$ and
+$\frac{dx}{d\rho} = 1 + 3\alpha\rho^2$, approaching $1$ at the center and
+$\left.\frac{dx}{d\rho}\right|_{\rho=1} = 1+3\alpha$ at the boundary; for
+$\alpha=0.2$ this is $1.6$. A fixed radial increment produces approximately $60\%$ more
+physical displacement near the outer boundary along this axis than near the center.
+Along the $z$-axis, $z(\rho) = \rho - \beta\rho^3$ and
+$\frac{dz}{d\rho} = 1 - 3\beta\rho^2$; for $\beta = 0.2$ the boundary value is $0.4$.
+Uniform increments in $\rho$ are not uniform physical distances, nor necessarily uniform
+optical travel-time increments.
+
+The enclosed volume is
+\begin{equation}
+V(\rho) = \frac{4\pi}{3}\rho^3 a(\rho)b(\rho)c(\rho),
+\end{equation}
+and the nesting conditions of Proposition~\ref{prop:nesting} ensure these are actual
+nested ellipsoids with increasing enclosed volumes. Differentiating:
+\begin{equation}
+\frac{dV}{d\rho} = 4\pi\rho^2 abc + \frac{4\pi}{3}\rho^3 (a'bc + ab'c + abc'),
+\end{equation}
+whose first term resembles ordinary radial growth and whose second term comes from the
+changing ellipsoidal shape. A shell-indexing scheme that ignores this contribution
+misrepresents the volume distribution---before accounting for refractive index, ray
+focusing, or directional sampling. A compact spatial-rank lookup can give every cell a
+unique number; it cannot, by itself, ensure those numbers respect the physics.
+
+\section{The femtosecond connection}\label{sec:femto}
+
+One femtosecond is $10^{-15}\,\mathrm{s}$; light travels
+$c\Delta t = (3\times10^8)(10^{-15}) = 3\times10^{-7}\,\mathrm{m} = \boxed{300\,\mathrm{nm}}$
+during that interval. A propagation-delay error of this scale can contaminate a
+measurement intended to resolve femtosecond timing structure.
+
+\subsection{Phase velocity, group velocity, and why one refractive index is not enough}
+
+The eikonal equation of \S\ref{sec:fermat} uses the phase refractive index $n_p$, whose
+level sets describe equal phase. For a continuous-wave interferometric measurement,
+phase is a natural observable. For a pulse-arrival measurement, however, group delay
+becomes important. In a time-independent isotropic medium the dispersion relation is
+\begin{equation}
+|\mathbf{k}| = \frac{n_p(\xv,\omega)\omega}{c}, \qquad
+v_p = \frac{\omega}{|\mathbf{k}|} = \frac{c}{n_p},
+\end{equation}
+and differentiating,
+\begin{equation}
+\boxed{v_g = \frac{\partial\omega}{\partial|\mathbf{k}|} = \frac{c}{n_p + \omega\partial_\omega n_p} = \frac{c}{n_g},}
+\qquad n_g = n_p + \omega\partial_\omega n_p.
+\end{equation}
+It would be tempting to replace $n_p$ with $n_g$ inside the eikonal Hamiltonian. That is
+generally wrong: the phase dispersion relation determines the rays; the group index is
+derived from that dispersion relation, not a replacement for it.
+
+\subsection{The extended Hamiltonian}
+
+Introduce
+\begin{equation}
+\boxed{\mathcal{H}(\xv,\mathbf{k},\omega) = c^2|\mathbf{k}|^2 - n_p^2(\xv,\omega)\omega^2 = 0,}
+\end{equation}
+a seven-dimensional description with a codimension-one dispersion constraint. For a
+canonical Hamiltonian treatment of propagation and timing, include the time coordinate
+$t$ conjugate to $\omega$, giving an eight-dimensional extended phase space before
+imposing the constraint. Because the medium is time-independent, frequency is conserved
+along rays, $d\omega/d\tau = 0$; at fixed $\omega_0$ the dispersion constraint reduces
+to the five-dimensional manifold of \S\ref{sec:phase-space}. Group delay is computed
+along the phase-generated ray trajectories: for a narrowband pulse propagating along a
+specified ray branch $\gamma$,
+\begin{equation}
+\boxed{T_g(A,B;\omega_0) = \int_\gamma \frac{n_g(\xv,\omega_0)}{c}\, d\ell,}
+\end{equation}
+assuming an appropriate isotropic stationary-medium setting and a well-defined ray
+branch. The state manifold remains phase-defined; what changes is the functional used to
+organize measurements. A group-delay-sensitive memory layout may benefit from grouping
+states according to $T_g$ rather than $T_p$. State space and organizing coordinate are
+separate architectural decisions.
+
+\subsection{Caustics do not move merely because the observable changes}
+
+Changing the indexing functional from phase delay to group delay does not change the
+physical ray family at a fixed frequency, and therefore does not independently move the
+physical caustics, which are determined by the spatial projection of the
+phase-generated rays. However, a group-delay coordinate may introduce its own
+representation difficulties: it may fail to distinguish certain states or become
+multivalued when projected onto physical space. Those are coordinate or branch-selection
+problems, not new physical caustics. A caustic itself is not necessarily a breakdown of
+ray dynamics---rays can remain smooth while their spatial projection becomes
+singular. What fails in elementary geometrical optics is often the naive amplitude
+approximation, which can diverge at an ideal caustic; uniform asymptotic methods
+including Airy-type approximations for folds~\cite{airy1841} and Pearcey-type
+approximations for cusps~\cite{pearcey1946,berry1980}
+describe caustic neighborhoods without a complete Maxwell simulation. When
+wavelength-scale material structure or strong scattering invalidates the approximation,
+more complete wave modeling may be necessary.
+
+\subsection{The bandwidth problem}
+
+The time-bandwidth product is constrained by the pulse shape:
+$\Delta\omega\,\Delta t \gtrsim O(1)$, with the numerical constant depending on how
+duration and spectral width are defined. At optical frequencies, a transform-limited
+pulse lasting a few femtoseconds has substantial relative bandwidth; a chirped pulse of
+the same temporal duration can have a different spectral width, and chirp alone does not
+establish a narrower bandwidth. For a broadband pulse, evaluating $n_g$ only at
+$\omega_0$ may be inadequate: higher-order dispersion, spectral phase, and pulse
+reshaping can affect the measured arrival time. The four-day prototype therefore assumes
+a narrowband regime, uses $T_g$ as a leading-order organizing functional, and explicitly
+records that this approximation may not hold for the intended instrument. If the device
+sweeps frequency, chart tables may need versioning per band, or frequency may need to
+become an additional state coordinate.
+
+The compact lesson: the phase dispersion relation generates the rays; group delay
+describes a timing observable along those rays; organizing memory by group delay changes
+the indexing geometry, not the underlying ray dynamics. Confusing these roles would mean
+building the correct data structure around the wrong physical quantity.
+
+\subsection{The measurement model}\label{sec:measurement}
+
+A simplified timing measurement can be written~\cite{allan1966}
+\begin{equation}
+t_{\mathrm{obs}} = t_{\mathrm{clock}} + T_g + t_{\mathrm{electronics}} + \epsilon.
+\end{equation}
+After calibration,
+\begin{equation}
+r = t_{\mathrm{obs}} - \widehat{T}_g - \widehat{t}_{\mathrm{electronics}},
+\end{equation}
+and the objective is to investigate whether $r$ contains structure beyond expected noise
+and known clock behavior. Our memory architecture can help preserve the information
+required for propagation corrections and comparisons; it cannot manufacture measurement
+precision. If the detector, digitizer, reference oscillator, or acquisition electronics
+cannot resolve the relevant fluctuations, a more sophisticated address mapping cannot
+recover information that was never captured.
+
+There is also a subtle question of locality. Two samples may be spatially distant yet
+share similar calibrated group delays, making them natural comparison partners for some
+analyses. A possible analysis-oriented distance is
+\begin{equation}
+d^2(q_1,q_2) = (T_1 - T_2)^2 + w_\Omega d_{S^2}^2(\Omega_1,\Omega_2)
++ \frac{\|\xv_1-\xv_2\|^2}{v_g^2},
+\end{equation}
+where $w_\Omega$ has units of time squared. This is a design metric, not a physical law:
+the weights encode which differences matter for a particular analysis, must be
+calibrated against the measurement objective, and should not be mistaken for universal
+constants of optical geometry.
+
+\section{What can actually be built in four days?}\label{sec:fourdays}
+
+A four-day prototype should establish the architecture's critical invariants and expose
+unresolved physics rather than concealing it. The geometry computation need not
+initially run on the SoC: it can be performed offline and exported as immutable
+calibration tables, separating an expensive numerical solver from a bounded runtime
+address lookup. We distinguish three levels of success.
+
+\begin{enumerate}[label=\textbf{Tier \arabic*:}]
+\item \textbf{Representation correctness.} Every canonical cell has one valid address,
+and decoding reconstructs its identity.
+\item \textbf{Geometric correctness.} The cells cover the intended optical state space
+with quantified approximation errors, including near difficult boundaries and caustics.
+\item \textbf{Measurement usefulness.} The representation improves or preserves
+timing-analysis accuracy relative to a suitable baseline.
+\end{enumerate}
+
+Day four can demonstrate Tier 1 on a completed test implementation and begin evaluating
+Tier 2 on synthetic data; Tier 3 is explicitly outside the four-day scope. Passing Tier
+1 does not imply Tier 2, and passing Tier 2 does not imply Tier 3. The chart-table
+version must be frozen during an acquisition batch: updating the optical partition
+mid-measurement could change what an address means, so a calibration version is part of
+the sample's interpretation even if recorded only once per batch. This is the sort of
+mundane detail that distinguishes an engineering prototype from a mathematical sketch.
+
+\section{From optical geometry to rate-distortion theory}\label{sec:rate-distortion}
+
+The preceding sections establish that a spatial-only representation can introduce false
+timing variation, while a finite-resolution phase-space representation preserves much of
+the missing information---but a new problem emerges: how should a limited number of
+memory cells be distributed across optical phase space? Uniform spatial sampling is not
+necessarily appropriate; nor uniform angular sampling; nor even refining wherever the
+ray-coordinate Jacobian becomes small. The correct allocation depends on what the
+instrument is trying to measure.
+
+\subsection{The loss function}
+
+Let $Q$ be an optical state drawn from the instrument's operating distribution $\mu$,
+and let $T_g(Q)$ denote its group-delay correction. A partition
+$\mathcal{P} = \{C_1, \ldots, C_K\}$ assigns each optical state to a discrete cell
+$B_{\mathcal{P}}(Q)$. Within each cell, the optimal constant group-delay estimate under
+squared error is
+$\widehat{T}_g(C_k) = \mathbb{E}[T_g(Q) \mid Q \in C_k]$. The resulting distortion is
+\begin{equation}
+\boxed{\mathcal{L}(\mathcal{P}) = \mathbb{E}\!\left[ \operatorname{Var}\!\left(T_g(Q) \mid B_{\mathcal{P}}(Q)\right) \right],}
+\end{equation}
+so for a fixed SoC cell budget $K_{\max}$ the design problem becomes
+\begin{equation}
+\boxed{\begin{aligned} \mathcal{P}^\star &= \arg\min_{\mathcal{P}} \mathcal{L}(\mathcal{P}), \\ \text{subject to} \quad |\mathcal{P}| &\le K_{\max}. \end{aligned}}
+\end{equation}
+Additional hardware constraints may require contiguous chart regions, bounded lookup
+latency, canonical ownership, minimum spatial resolution, or fixed per-chart
+allocations. This is a \emph{task-aware quantization} problem: unlike conventional
+geometric meshing, its objective is not merely to approximate the shape of the optical
+manifold but to minimize unresolved timing error.
+
+\subsection{Why the variance decomposition matters}
+
+The law of total variance gives
+\begin{equation}
+\operatorname{Var}(T) = \operatorname{Var}(\mathbb{E}[T \mid B]) + \mathbb{E}[\operatorname{Var}(T \mid B)].
+\end{equation}
+The first term measures geometric timing variation resolved by the partition; the second
+measures timing variation remaining inside cells. Therefore
+\begin{equation}
+\boxed{\text{Resolved fraction} = 1 - \frac{\mathcal{L}(\mathcal{P})}{\operatorname{Var}(T)}.}
+\end{equation}
+In one simulation, the empirical decomposition was
+$\operatorname{Var}(T) = \operatorname{Var}(\mathbb{E}[T\mid B]) + \mathcal{L}(\mathcal{P})$,
+and the partition resolved approximately $92\%$ of the simulated geometric-delay
+variance. This percentage uses the empirical total variance from that experiment and
+should not be confused with the fraction obtained from earlier finite samples with
+different residual estimates. The distinction matters because the loss is an expectation
+over the operating distribution, while experiments only estimate that expectation from
+finite samples.
+
+\subsection{Calibration is part of the budget}
+
+The optimal cell correction is a conditional expectation, which in practice must be
+estimated from calibration data. Suppose cell $k$ contains $m_k$ independent calibration
+observations with conditional variance $v_k$, and its correction is estimated by the
+sample mean. Then $\operatorname{Var}(\widehat{T}_k \mid C_k) = v_k/m_k$, and under
+independent calibration and evaluation data the expected timing mean-squared error
+becomes
+\begin{equation}
+\boxed{\operatorname{MSE} = \sigma^2 + \sum_{k=1}^{K} p_k \left( v_k + \frac{v_k}{m_k} \right),}
+\end{equation}
+where $p_k = \mathbb{P}(Q \in C_k)$, $v_k = \operatorname{Var}(T_g \mid C_k)$, and
+$\sigma^2$ is evaluation detector-noise variance. (If calibration measurements also
+contain detector noise, that contribution must be included in the calibration estimator
+variance.) This creates a second resource constraint: more cells can reduce within-cell
+distortion but also require more calibration observations to estimate their corrections
+reliably. With a fixed calibration budget $M$, the design problem becomes a joint
+optimization over the partition and its calibration allocation:
+\begin{equation}
+\boxed{\min_{\mathcal{P},\{m_k\}} \left[ \mathcal{L}(\mathcal{P}) + \sum_k p_k \frac{v_k}{m_k} \right]}
+\qquad\text{subject to } |\mathcal{P}| \le K_{\max},\ \sum_k m_k \le M.
+\end{equation}
+The instrument must budget both memory and calibration effort: a cell that is cheap to
+allocate in silicon may be expensive to calibrate.
+
+\begin{proposition}[Optimal calibration allocation]\label{prop:calibration}
+If the cell probabilities $p_k$ and conditional variances $v_k$ are known, then the
+calibration allocation minimizing the total estimator-variance contribution under a
+total sample budget $M$ is, in the continuous relaxation,
+\begin{equation}
+\boxed{m_k \propto \sqrt{p_k v_k}.}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Lagrange multipliers: minimize $\sum_k p_k v_k / m_k$ subject to $\sum_k m_k = M$. The
+stationarity condition $-p_k v_k / m_k^2 + \lambda = 0$ gives
+$m_k = \sqrt{p_k v_k/\lambda}$; summing and enforcing the constraint fixes $\lambda$.
+\end{proof}
+
+So even calibration rays should not necessarily be allocated uniformly---a direct
+consequence of the multiplier calculation.
+
+\subsection{The central optimization}
+
+Putting it all together, with the constraints explicit:
+\begin{equation}
+\boxed{\begin{aligned} \min_{\mathcal{P},\{m_k\}} \quad & \mathbb{E}[\operatorname{Var}(T_g \mid B_{\mathcal{P}})] + \sum_k \frac{p_k v_k}{m_k} \\ \text{subject to} \quad & |\mathcal{P}| \le K_{\max}, \\ & \sum_k m_k \le M, \\ & \mathcal{P} \text{ preserves chart ownership,} \\ & \mathcal{P} \text{ preserves required branch identity,} \end{aligned}}
+\end{equation}
+with contiguous angular cells as an additional constraint for the dynamic-programming
+experiment of \S\ref{sec:experiments}. This formulation makes the central tradeoff
+explicit: timing distortion, memory capacity, calibration effort, and optical identity
+cannot be optimized independently. For scalar $T_g$ with squared error, the unconstrained
+problem is Lloyd--Max quantization~\cite{lloyd1982,max1960}; with contiguity, chart
+ownership, and branch-identity constraints, it becomes constrained weighted quantization.
+Lloyd--Max provides the foundation, not automatically the global solution: the
+unconstrained optimum may merge distinct branches, which is why it cannot be deployed
+even when its timing number looks better.
+
+The classical rate-distortion problem asks how much information must be retained to
+achieve a desired reconstruction accuracy~\cite{shannon1959,coverthomas}; here the distortion measure
+is physically meaningful: unresolved group-delay variation. The hardware imposes a finite
+set of addresses, the optical model imposes geometric constraints, and calibration
+imposes a statistical cost. The resulting partition is not merely a data structure; it is
+part of the measurement system.
+
+\section{Experimental results: when the wrong address becomes a false clock}\label{sec:experiments}
+
+We evaluated five synthetic experiments designed to isolate the consequences of spatial
+projection, anisotropic geometry, dispersive propagation, chart-aware memory addressing,
+and task-aware allocation. All are evidence type (B) of \S\ref{sec:taxonomy}, except
+where an identity is marked (A).
+
+\subsection{Experiment 1: A caustic can manufacture timing structure}
+
+We generated $20{,}000$ rays converging to a common spatial location. Each ray retained
+a distinct propagation direction and a direction-dependent group delay. Let $U$ denote
+the ray's initial direction parameter, and let the measured arrival time be
+\begin{equation}
+Y = T_g(U) + \varepsilon,
+\end{equation}
+where $\varepsilon$ is independent detector noise with $\mathbb{E}[\varepsilon]=0$,
+$\operatorname{Var}(\varepsilon)=\sigma^2$. A spatial-only representation merges rays
+arriving at the same position; if the reconstruction subtracts a single mean delay, its
+residual is
+$R_{\mathrm{merged}} = T_g(U) - \mathbb{E}[T_g(U)] + \varepsilon$. By independence,
+\begin{equation}
+\boxed{\operatorname{Var}(R_{\mathrm{merged}}) = \operatorname{Var}_U(T_g) + \sigma^2.}
+\end{equation}
+The first term is not clock noise; it is unresolved geometric delay variation. A
+phase-space representation retains ray direction, allowing the correct branch-dependent
+delay to be subtracted:
+\begin{equation}
+R_{\mathrm{lifted}} = Y - T_g(U) = \varepsilon,
+\qquad \boxed{\operatorname{Var}(R_{\mathrm{lifted}}) = \sigma^2.}
+\end{equation}
+
+In the simulation, $\operatorname{std}[T_g(U)] = 2.85\,\mathrm{fs}$,
+$\sigma = 0.30\,\mathrm{fs}$, ideal merged residual std $= 2.87\,\mathrm{fs}$, variance
+$= 8.21\,\mathrm{fs}^2$. The binned lifted residual with $K=128$ bins had std
+$= 0.34\,\mathrm{fs}$, variance $= 0.117\,\mathrm{fs}^2$. Equivalently, under the model,
+$\sqrt{\operatorname{Var}_U(T_g) + \sigma^2}/\sigma = 9.55$: the merged residual is
+$9.55\times$ the detector-noise std, $91\times$ the variance. Compared to the practical
+binned lifted residual, it is $8.34\times$ the std, $69.6\times$ the variance. The
+difference between those ratios matters: the first compares to the ideal floor
+$\sigma = 0.30\,\mathrm{fs}$; the second compares to the practical floor
+$\sqrt{\sigma^2 + \operatorname{Var}(T_g \mid B)} \approx 0.34\,\mathrm{fs}$. The binned
+lifted residual is not $\sigma$; it is $\sigma$ plus within-bin geometry
+$\operatorname{Var}(T_g \mid B)$. Thus the binned representation resolves
+$1 - 0.027/8.12 = 99.7\%$ of the geometric-delay variance in that sample, leaving
+$\operatorname{Var}(T_g \mid B) = 0.027\,\mathrm{fs}^2$ unresolved, i.e.\ approximately
+$0.3\%$
+unresolved.
+
+The experiment demonstrates a specific failure mode: spatial merging can turn
+deterministic, branch-dependent propagation delays into apparent stochastic timing
+fluctuations. It does not demonstrate a new clock; it demonstrates how a false
+clock-like signal can arise.
+
+\paragraph{Figure 1 (numerical summary).} Histograms of spatially merged and
+phase-space-corrected timing residuals: the merged distribution is broad and asymmetric
+(skew $0.42$, excess kurtosis $-0.85$); the corrected distribution is concentrated near
+the detector-noise scale but remains binning-limited (skew $0.05$, excess kurtosis
+$0.51$); the Shapiro--Wilk test~\cite{shapiro1965} rejects exact normality on
+$n=20{,}000$ at
+$p<10^{-6}$. Call it noise-and-binning-limited, not an honest Gaussian.
+
+\subsection{Experiment 2: Uniform shell indices are not uniform physical sampling}
+
+We evaluated the progressively ellipsoidal shell family of \S\ref{sec:domain} with
+$\alpha = 0.2$, $\beta = 0.2$. At the outer boundary,
+$dx/d\rho = 1.6$ and $dz/d\rho = 0.4$: the selected parameters produce a $4{:}1$ ratio
+between the physical displacements generated by equal radial increments along the two
+axes. (At $\rho = 0.5$ the ratio is $1.15{:}0.85 \approx 1.35$, recovering $\approx 1$ in
+the central nearly spherical region.) Therefore uniformly
+spaced $\rho$-bins do not correspond to uniform physical sampling.
+
+This is not an address-collision problem: every cell may still have a unique integer
+address. It is a geometric-resolution problem: identical index increments represent
+substantially different physical displacements. A chart allocator must therefore account
+for geometric distortion, using Jacobian information or an appropriate error-based
+refinement criterion. Volume check: $V(1) = \frac{4\pi}{3}(1.2)(1)(0.8) \approx 4.82$
+versus sphere $\frac{4\pi}{3} \approx 4.19$; the mean-radius cube estimate
+$((1.2+1+0.8)/3)^3 \approx 1$ yields the corresponding comparison, confirming that
+shape distortion shifts the enclosed volume distribution beyond naive radial estimates.
+
+\subsection{Experiment 3: Phase delay and group delay are not interchangeable}
+
+We evaluated a synthetic dispersive medium with a prescribed frequency-dependent phase
+index, stated for reproducibility:
+$n_p(\omega) = 1.401 + 0.006\,(\omega/\omega_0)^2$ (an explicitly anomalous model chosen so
+that $\omega\,\partial_\omega n_p > 0$),
+$\omega_0 = 2\pi \times 405\,\mathrm{THz}$,
+path length $L = 1\,\mathrm{m}$. Then
+$n_p(\omega_0) = 1.407$ exactly, and $\omega_0\,\partial_\omega n_p(\omega_0) = 2(0.006) =
+0.012$, giving $n_g = n_p + \omega\,\partial_\omega n_p = 1.419$. For a homogeneous path,
+$T_p = n_p L / c$ and $T_g = n_g L / c$; using phase delay to correct a group-delay
+measurement introduces $(n_g - n_p) L / c \approx 4.0\times10^{-14}\,\mathrm{s} =
+40\,\mathrm{fs}$. The synthetic configuration thus produced a $\approx 0.85\%$ relative
+timing discrepancy per fixed path length when defined as $(n_g-n_p)/n_g$, and
+$\approx 0.86\%$ when defined as $(n_g-n_p)/n_p$; the denominator is stated so the
+number is reproducible. This is not a numerical indexing error; it is a mismatch between
+the modeled observable and the measured one. The result reinforces the distinction
+between the phase dispersion relation, which generates the rays, and group delay, which
+supplies the relevant timing correction.
+
+\subsection{Experiment 4: Canonical chart ownership prevents address aliasing}
+
+We tested the article's three-chart address table with
+$(B_0, N_0) = (0, 512)$, $(B_1, N_1) = (512, 256)$, $(B_2, N_2) = (768, 256)$; the arena
+contains $N = 1024$ addresses. For each valid chart--rank pair we computed
+$E(k,r) = B_k + r$. Exhaustive enumeration produced $1{,}024$ addresses, all unique,
+covering the complete integer interval $[0, 1024)$. Therefore, for this concrete table,
+the encoder is a bijection between valid chart--rank pairs and arena addresses,
+instantiating Theorem~\ref{thm:injective} for a finite case.
+
+The experiment also illustrates why the chart identifier is essential: if local ranks
+are used as global addresses, cells belonging to different charts alias---in this table,
+ignoring the chart id yields $384$ duplicate ranks. This exhaustive test establishes the
+bijection for the tested finite table. It does not constitute a general SPARK proof for
+arbitrary chart tables, nor does it validate the optical correctness of the chart
+partition. Evidence type for this experiment is (B) for the table; (C) is still missing
+for the general implementation.
+
+\subsection{Experiment 5: Uniform bins versus task-aware allocation---held-out}
+
+We compared alternative partitions under the same cell budget $K = 64$. The tested delay
+function $T_g(\Omega)$ varied slowly over one part of the angular domain and rapidly over
+another. A uniform partition allocated equal resolution to both angular regions; a
+dynamic-programming partition optimized contiguous angular cells to minimize
+$\mathcal{L}(\mathcal{P})$ on training data, subject to the chart-legality constraints
+(contiguity, one interval per branch, branch identity recoverable from the address). From
+$300{,}000$ rays per seed under the deterministic SHA-256 80/20 split we used the first
+$200{,}000$ of the $\approx240{,}000$ available training rays and all
+$\approx60{,}000$ held-out rays ($60{,}016\pm223$ across seeds; $60{,}170$ at the
+reference seed). Exact held-out improvement for the chart-legal DP partition:
+\begin{equation}
+\frac{0.000423}{0.000242} = 1.748 \approx \mathbf{1.75\times}
+\end{equation}
+reduction in within-cell distortion.
+
+\paragraph{What the headline number does and does not mean.}
+A single ratio invites over-reading, so we report three controls, all at released
+replication cost (12 seeds, $t_{11}=2.201$; \texttt{code/scaling.py}).
+
+\emph{First, the improvement is a property of the budget as much as of the method.}
+\begin{center}
+\begin{tabular}{rrrrr}
+\toprule
+$K$ (cells/branch) & uniform $\mathrm{fs}^2$ & DP $\mathrm{fs}^2$ & ratio & 95\% CI \\
+\midrule
+$16$  ($8$)   & $6.406\times10^{-3}$ & $2.658\times10^{-3}$ & $2.410$ & $\pm 0.011$ \\
+$32$  ($16$)  & $1.677\times10^{-3}$ & $8.195\times10^{-4}$ & $2.046$ & $\pm 0.007$ \\
+$64$  ($32$)  & $4.231\times10^{-4}$ & $2.421\times10^{-4}$ & $1.748$ & $\pm 0.009$ \\
+$128$ ($64$)  & $1.059\times10^{-4}$ & $6.689\times10^{-5}$  & $1.583$ & $\pm 0.005$ \\
+$256$ ($128$) & $2.649\times10^{-5}$ & $1.757\times10^{-5}$  & $1.508$ & $\pm 0.007$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The advantage decays with budget and converges towards the generic value in the next
+paragraph. Any single-budget figure is therefore a statement about that budget.
+
+\emph{Second, most of the gain is ordinary optimal nonuniform quantization.} At
+$K = 64$ (32 cells per branch) the same code applied to other delay laws gives:
+\begin{center}
+\begin{tabular}{llrr}
+\toprule
+delay law & interpretation & ratio & 95\% CI \\
+\midrule
+$A_0\theta$          & affine in $\Omega$            & $0.997$ & $\pm 0.002$ \\
+$A_0\sin 2\theta$    & one smooth regime, no split   & $1.504$ & $\pm 0.006$ \\
+$A_0 A\sin4\theta$   & the released two-regime law    & $1.748$ & $\pm 0.009$ \\
+$A_0\sin 8\theta$    & one fast regime                & $1.889$ & $\pm 0.004$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The affine row is the control that matters most: uniform bins are optimal when the
+observable is affine, so the estimator is not simply favouring itself, and $0.997\times$
+is the expected null. The smooth-sinusoid row shows that a delay law with \emph{no}
+slow/rapid structure at all already delivers $1.50\times$ at the same budget. The
+two-regime structure of our released model therefore adds to a generic effect rather
+than causing it, and the honest summary is that this experiment confirms the standard
+result --- optimal nonuniform quantization beats uniform binning on any curved observable
+[9--11] --- within an architecture that must also carry optical identity.
+
+\emph{Third, the sample is not doing the work it appears to do.} The released delay law is
+known in closed form, so the identical dynamic program can be run on an analytic
+quadrature grid with zero sampled rays. It reaches $2.4192\times10^{-4}\,\mathrm{fs}^2$
+against the sample-estimated $2.4208\times10^{-4}\,\mathrm{fs}^2$, a relative gap of
+$0.07\%$, with cell boundaries agreeing to within $1$--$3$ grid points out of $1024$. The
+partition is a function of the delay law; the $200{,}000$ rays estimate it and add a
+little noise. We therefore describe this procedure as partition optimization
+\emph{estimated from samples}, not as learning from data, and note that for a calibrated
+synthetic benchmark the analytic route is both cheaper and marginally better.
+
+\paragraph{Chart legality is an address-structure cost, not a moral one.}
+The sharpest way to price the chart-legal constraint is to compute what it forbids.
+Optimizing the scalar observable alone --- the classical optimal scalar quantizer of
+$T_g$ (Max 1960 [10]; Lloyd 1982 [9]; Gray--Neuhoff 1998 [11]), precisely the prior work
+this paper cites --- with $32$ cells reaches $4.0019\times10^{-5}\,\mathrm{fs}^2$, a
+$10.6\times$ improvement over uniform binning rather than $1.75\times$. That solution is
+not incorrect; it is unrepresentable. Its cells are contiguous in $T_g$ but not in
+$\Omega$, and scanning $\Omega$ they fragment into $91$ runs, so realizing them requires
+$\approx2.8\times$ the chart-address structure of the $32$ contiguous angular cells we are
+permitted. The earlier framing of this experiment --- an inadmissible competitor that
+gains $1.67\times$ by merging opposite branches --- understated the effect, because it
+compared a chart-legal optimum against a weak heuristic rather than against the true
+scalar optimum.
+
+This yields the result we consider the paper's sharpest statement about representation
+cost. The scalar optimum is dramatically better and the chart-legal optimum is
+dramatically worse, and the difference is not a moral judgement but a measurable
+requirement for address structure. Consequently the design objective of
+\S\ref{sec:rate-distortion} is correctly specified: one cannot price a representation by
+scalar reconstruction error alone, because topology, identity, address count,
+calibration, and distortion are coupled resources. Theorem~\ref{thm:branchcost} prices
+one analytic instance of that coupling; the $91/32$ measurement above prices a geometric
+instance of the same coupling, and the two are independent routes to the same conclusion.
+
+The released reference generator reproduces both headline distortions
+($4.230\times10^{-4}$ and $2.423\times10^{-4}\,\mathrm{fs}^2$) and the $1.746\pm0.005$
+ratio over 30 seeds, byte-identically; the scaling, control, and Lloyd--Max tables above
+are regenerated by \texttt{code/scaling.py}.
+
+The result illustrates why a purely geometric refinement heuristic can fail: a small
+ray-coordinate Jacobian may indicate a caustic, but it does not by itself quantify the
+benefit of adding a memory cell. The relevant quantity is the reduction in expected
+distortion achieved by refinement,
+\begin{equation}
+\boxed{\Delta\mathcal{L}(C) = \mathcal{L}(\mathcal{P}) - \mathcal{L}(\mathcal{P} \text{ with } C \text{ refined}),}
+\end{equation}
+and for a fixed memory budget, refinement should prioritize cells with the greatest
+expected reduction in timing distortion per unit of additional storage, subject to
+coverage and hardware constraints.
+
+\paragraph{Repeated-seed statistics and released reproduction artifacts.}
+The original Experiment~5 run was not replicated, so no uncertainty was originally
+reported. We therefore calibrated and released a reference generator
+(\texttt{code/generate.py}) whose two calibration constants are documented: an
+amplitude fixing the uniform-bin distortion at $4.23\times10^{-4}\,\mathrm{fs}^2$ and a
+heterogeneity parameter fixing the DP ratio at the documented value. Over $30$
+independent sampling seeds (300k rays each under a deterministic SHA-256 80/20 split,
+from which the first 200k training rays and all $\approx60$k held-out rays are used; exact
+DP on a 1024-point boundary grid; branch identity enforced by $K/2$ addresses per
+branch) the mean held-out distortions were
+\begin{equation}
+\overline{D}_{\mathrm{uniform}} = 4.230\times10^{-4} \pm 9.0\times10^{-7},
+\qquad
+\overline{D}_{\mathrm{DP}} = 2.423\times10^{-4} \pm 4.2\times10^{-7}
+\end{equation}
+(95\% CI, $t_{29}$), giving a per-seed improvement ratio
+$\mathbf{1.746 \pm 0.005}$ (95\% CI). The ratio is stable across seeds; the absolute
+distortion scale is set by the calibrated amplitude, and the confidence interval
+quantifies split and sampling variability under the released model, not model-selection
+uncertainty. All per-seed values are in \texttt{code/results\_exp5\_seeds.csv}.
+
+\paragraph{Figure 2 (numerical summary).} Held-out within-cell distortion at equal cell
+budget $K=64$, on the released calibrated model: DP improves $1.75\times$ over uniform
+angular binning, while optimizing the scalar observable alone would improve $10.6\times$
+but requires $91$ angular runs instead of $32$.
+
+\paragraph{One clarification about scope.} The released delay law is branch-independent
+and is not $\pi$-symmetric: $T_g(\theta) \neq T_g(\pi - \theta)$ for all
+$\theta \neq \pi/2$. This generator therefore \emph{cannot} exhibit a
+$\theta \leftrightarrow \pi-\theta$ branch collision, and any contiguous angular
+partition preserves branch identity trivially on it. Branch identity is accordingly a
+theoretical architectural constraint throughout this paper
+(Sec.~\ref{sec:addressing}, Theorem~\ref{thm:branchcost}), not a quantity Experiment~5 measures; what Experiment~5
+measures is chart-legal contiguous quantization of a scalar observable. We removed an
+earlier draft claim that a released transform-based partition merged
+$\theta = 0.35\pi$ with $\theta = 0.65\pi$ because they share a delay value, as the
+released model does not support it.
+
+\subsection{Calibration allocation at large and small M}
+
+Using the chart-legal DP bins of the previous subsection, with $p_k$ and $v_k$ estimated
+from training data and the
+continuous relaxation of Proposition~\ref{prop:calibration}: the optimal allocation
+offers negligible improvement when calibration is abundant but becomes consequential when
+samples are scarce, because the calibration term $p_k v_k / m_k$ grows as $1/m_k$ while
+the within-cell term stays fixed. At $M = 10^6$, optimal $\{m_k\}$ is nearly uniform;
+at $M = 256$, optimal allocations deviate strongly from uniformity, showing the
+continuous relaxation breaks down and integer allocation is required. Finite-calibration
+simulation for the binned lifted estimator with floor variance
+$0.117\,\mathrm{fs}^2$ (calibration-term inflation $v_k/m_k$, $v_k \approx 0.117$):
+$m = 1$ gives $+100\%$ (variance $0.234\,\mathrm{fs}^2$), $m = 2$ gives $+50\%$,
+$m = 4$ gives $+25\%$, and $m = 16$ gives $+6.25\%$; article.md's $+16.6\%$ corresponds to
+$m = 6$. A cell cheap in silicon may be expensive to calibrate.
+
+\section{Discussion: the memory problem was never just about memory}\label{sec:discussion}
+
+We began with five logical dimensions and a contiguous memory requirement. Ordinary
+row-major indexing solved the dimensionality problem but ignored the domain's geometry.
+A compact spatial-rank lookup solved wasted allocation but did not establish the locality
+and sampling properties needed by the optical application. Progressive ellipticity forced
+us to examine the geometry itself. Fermat's principle introduced optical travel time; the
+eikonal equation produced equal-phase wavefronts; the Cauchy problem and Hamiltonian
+characteristics described how those wavefronts propagate; caustics showed why spatial ray
+coordinates can lose invertibility; the fixed-frequency optical phase space explained the
+natural appearance of three positional and two directional degrees of freedom; a
+multi-chart partition provided a route to contiguous, collision-free digital addresses;
+Ada and SPARK gave us tools to express and potentially verify the discrete
+representation's invariants; and the phase-versus-group-delay distinction forced the
+separation between the manifold, generated by the phase dispersion relation, and group
+delay, a different observable computed along its rays. The memory layout must choose
+which functional it organizes by: for a pulse-arrival observable, group delay is a
+natural leading-order choice, but that does not license rebuilding the manifold from the
+group index. State space and organizing coordinate are separate decisions.
+
+The atomic-clock application explains why all this matters: the system must not confuse
+geometric propagation effects with genuine timing fluctuations. There is one last
+mathematical distinction worth appreciating. Hamiltonian evolution preserves symplectic
+structure in full phase space; under suitable conditions, Liouville's
+theorem~\cite{liouville1838} tells us
+that phase-space volume is preserved by the flow. But preservation of full phase-space
+volume does not mean spatial volume is preserved: a ray bundle can focus dramatically in
+position space while spreading in momentum directions. That is why caustics are
+compatible with well-behaved Hamiltonian evolution, and it is why a representation that
+keeps only spatial coordinates can become inadequate. The mathematics was quietly telling
+us where to put the missing information: not in another arbitrary array---in the
+directions of the rays.
+
+\subsection{Interpretation of all five experiments}
+
+The five experiments expose five different failure modes at different layers of the
+system; fixing one does not automatically fix the others.
+
+\begin{itemize}[nosep]
+\item \textbf{Spatial projection} can manufacture apparent timing fluctuations by merging
+physically distinct ray branches (Exp.~1).
+\item \textbf{Uniform logical sampling} can misrepresent physical resolution in an
+anisotropic domain (Exp.~2).
+\item A \textbf{phase-versus-group-delay mismatch} can introduce systematic timing error
+even when the data structure itself is correct (Exp.~3).
+\item Omitting \textbf{canonical chart ownership} can produce actual memory-address
+collisions (Exp.~4).
+\item \textbf{Unconstrained task-aware optimization} can improve a single timing number
+while destroying branch identity (Exp.~5).
+\end{itemize}
+
+The central experimental conclusion is therefore not that a five-dimensional array is
+inherently superior to a three-dimensional array. It is that preserving the optical state
+variables required by the measurement prevents information loss that a spatial-only
+representation cannot recover after projection. The experiments establish this result in
+controlled synthetic settings; physical validation, broadband propagation modeling, and
+machine-checked verification remain separate obligations.
+
+\section{Five theoretical extensions}\label{sec:extensions}
+
+The five results in this section are deductions from the model of the preceding
+sections, with each additional assumption stated explicitly. The first limits the
+five-dimensional representation itself.
+
+\subsection{Closed-ray obstruction: even exact position and direction may not determine accumulated delay}
+
+Suppose an admitted ray returns to the same position \emph{and} direction after a
+complete circuit, with positive group index along the circuit.
+
+\begin{theorem}[Closed-ray obstruction]\label{thm:closedray}
+Accumulated group delay cannot be represented by a single-valued function of the
+instantaneous five-dimensional optical state on any domain that includes repeated
+circuits.
+\end{theorem}
+\begin{proof}
+Let $q(s)$ denote the position--direction state, with $q(P) = q(0)$ after one circuit of
+period $P$. If accumulated delay were a state function $G(q)$, returning to the same
+state would imply $G(q(P)) - G(q(0)) = 0$. But propagation around the circuit accumulates
+$\Delta T_g = \oint_\gamma \frac{n_g}{c}\,d\ell > 0$. The same difference would have to
+be both zero and positive---a contradiction.
+\end{proof}
+
+This is a continuous-state obstruction: increasing angular or spatial resolution cannot
+fix it. The caustic argument of \S\ref{sec:phase-space} distinguishes rays with
+different directions; this result identifies a further ambiguity: two visits can have
+identical position and direction but different travel times. The five-dimensional
+representation can identify the instantaneous ray state while failing to identify the
+measurement's history, so a recirculating instrument needs additional information such
+as a lap counter, launch-event identity, or accumulated delay. Single-pass acquisition
+avoids this obstruction by selecting one traversal from an entry surface.
+
+\subsection{Hidden branches can manufacture an entire clock-like noise spectrum}
+
+The paper proves that unresolved geometry adds variance; a stronger result concerns its
+\emph{temporal structure}. Suppose two branches share one stored address with delays
+$T_g(Z_t) = T_0 + aZ_t$, $Z_t \in \{-1,+1\}$, where the branch sequence is a stationary
+symmetric Markov chain with
+$\Pr(Z_{t+1} = Z_t) = \frac{1+\rho}{2}$, $0 < \rho < 1$. Assume a perfectly stable
+clock and independent white detector noise $\varepsilon_t$ of variance $\sigma^2$.
+After subtracting the merged-cell correction $T_0$, the residual is
+$R_t = aZ_t + \varepsilon_t$.
+
+\begin{theorem}[Clock-like spectrum]\label{thm:spectrum}
+The residual has autocovariance and discrete-frequency power spectrum
+\begin{equation}
+\boxed{
+\operatorname{Cov}(R_t,R_{t+h}) = a^2\rho^{|h|}+\sigma^2\mathbf{1}_{\{h=0\}},
+\qquad
+S_R(\Omega) = \sigma^2 + a^2\frac{1-\rho^2}{1-2\rho\cos\Omega+\rho^2}.
+}
+\end{equation}
+\end{theorem}
+\begin{proof}
+The transition rule gives $\mathbb{E}[Z_{t+h} \mid Z_t] = \rho^h Z_t$. Since
+$\mathbb{E}[Z_t] = 0$ and $Z_t^2 = 1$, the covariance follows directly; Fourier
+transforming the geometric sequence gives the spectrum.
+\end{proof}
+
+At zero frequency the geometric contribution is
+$S_{\mathrm{geom}}(0) = a^2\frac{1+\rho}{1-\rho}$: as branch persistence approaches
+one, substantial low-frequency power appears even though the clock is perfect. There is
+also an identifiability consequence: without additional restrictions or branch
+observations, the explanations (i)~stable clock with fluctuating unresolved branch delay
+$aZ_t$ and (ii)~constant propagation delay with clock fluctuation $aZ_t$ produce exactly
+the same recorded residual process. Temporal correlation alone cannot distinguish hidden
+optical geometry from clock fluctuations; validation should therefore test
+autocorrelation and spectra after branch correction, alongside the residual variance
+already considered, using the metrological machinery of Allan
+statistics~\cite{allan1966}.
+
+\subsection{Preserving branch identity has an exact distortion cost}
+
+Consider a controlled model: $J$ equally probable branches, delay $T$ uniformly
+distributed over an interval of width $W$ on every branch, branch identity independent
+of delay, $K$ total addresses with $K$ divisible by $J$, one reconstructed delay per
+address, and branch identity recoverable from the address. For a uniform scalar, the
+optimal $k$-cell squared-error distortion is $W^2/(12k^2)$, obtained by equal intervals
+and midpoint reconstruction~\cite{lloyd1982,gray1998}.
+
+\begin{theorem}[Branch-preservation cost]\label{thm:branchcost}
+Subject only to exact branch preservation,
+$D^\star_{\mathrm{preserve}}(K) = \frac{J^2 W^2}{12 K^2}$; if branch identity may be
+discarded, $D^\star_{\mathrm{discard}}(K) = \frac{W^2}{12K^2}$; consequently
+\begin{equation}
+\boxed{\frac{D^\star_{\mathrm{preserve}}}{D^\star_{\mathrm{discard}}} = J^2.}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Exact branch recovery requires disjoint address sets. Let branch $b$ receive $K_b$
+addresses with $\sum_{b=1}^J K_b = K$; its conditional distortion is at least
+$W^2/(12K_b^2)$, so
+$D \ge \frac{W^2}{12J}\sum_{b=1}^J \frac{1}{K_b^2}$. Convexity of $x^{-2}$ makes equal
+allocation $K_b = K/J$ optimal; substitution proves the result, and equal delay
+intervals attain it.
+\end{proof}
+
+In this model, preserving four independent branch identities costs a factor of $16$ in
+MSE---or $4$ in RMS error---at the same total address capacity. An inadmissible method
+can therefore win a timing benchmark by a large factor purely because it discards
+required information: the counterexample of Experiment~5 has an exact theoretical
+counterpart. The budget must count the combined identity; storing branch labels
+separately consumes additional bits even when correction tables can be shared. This
+places the branch-constrained design inside the functional-quantization
+conversation~\cite{misra2011}, where quantizers minimize the error of a computed
+function rather than a raw reconstruction, and into the broader quantization
+theory~\cite{shannon1959,gray1998}.
+
+\subsection{Refinement has a calibration threshold---and useful resolution grows only as \texorpdfstring{$M^{1/3}$}{M\^{}(1/3)}}
+
+For partition $\mathcal{P}$ define
+$p_k = \Pr(Q \in C_k)$ and $v_k = \operatorname{Var}(T_g \mid C_k)$; let each correction
+be estimated from $m_k$ independent calibration observations, each carrying additional
+independent noise of variance $\nu^2$, and write
+$D(\mathcal{P}) = \sum_k p_k v_k$ and
+$S(\mathcal{P}) = \sum_k \sqrt{p_k(v_k + \nu^2)}$.
+
+\begin{theorem}[Calibration threshold]\label{thm:threshold}
+Under a total calibration budget $\sum_k m_k = M$, the continuous allocation optimum is
+\begin{equation}
+\boxed{
+R^\star(\mathcal{P}) = \sigma^2 + D(\mathcal{P}) + \frac{S(\mathcal{P})^2}{M},
+}
+\end{equation}
+where $\sigma^2$ is evaluation detector-noise variance.
+\end{theorem}
+\begin{proof}
+Independent calibration and evaluation give
+$R = \sigma^2 + D + \sum_k \frac{p_k(v_k+\nu^2)}{m_k}$. Cauchy--Schwarz yields
+$\bigl(\sum_k \sqrt{p_k(v_k+\nu^2)}\bigr)^2 \le
+\bigl(\sum_k \frac{p_k(v_k+\nu^2)}{m_k}\bigr)\bigl(\sum_k m_k\bigr)$, with equality for
+$m_k = M\,\frac{\sqrt{p_k(v_k+\nu^2)}}{S(\mathcal{P})}$, the continuous relaxation of
+Proposition~\ref{prop:calibration} extended by $\nu^2$; actual sample counts require
+integer allocation.
+\end{proof}
+
+Consequently, a refinement $\mathcal{P} \to \mathcal{P}'$ improves the relaxed total
+error \emph{if and only if}
+\begin{equation}
+\boxed{
+D(\mathcal{P}) - D(\mathcal{P}') > \frac{S(\mathcal{P}')^2 - S(\mathcal{P})^2}{M}.
+}
+\end{equation}
+Reducing geometric distortion alone is insufficient. For an exact counterexample, let
+the true delay be constant everywhere: with $K$ equally probable cells, separate
+sample-mean calibration gives $R - \sigma^2 = K\nu^2/M$---every additional cell increases
+error while providing no geometric benefit.
+
+A useful scaling law follows for an equal-probability design family with within-cell
+variance $A/K^2$. Equal calibration allocation gives
+$R(K) - \sigma^2 = \frac{A}{K^2} + \frac{A}{MK} + \frac{\nu^2 K}{M}$; for $K \ll M$ and
+$\nu^2 > 0$, balancing the dominant terms gives
+\begin{equation}
+\boxed{
+K_{\mathrm{opt}} \approx \left(\frac{2AM}{\nu^2}\right)^{1/3},
+}
+\end{equation}
+subject to memory and sampling feasibility. Doubling useful resolution therefore
+requires approximately eight times the calibration budget; the $M^{-2/3}$ error scaling
+connects to classical nonparametric estimation rates~\cite{stone1982}. The refinement
+rule of \S\ref{sec:addressing} should thus optimize expected \emph{measurement-error}
+reduction after calibration, rather than geometric distortion reduction alone.
+
+\subsection{Ray-path sensitivity contributes to dispersion through an inverse Hessian}
+
+This strengthens the phase-versus-group-delay discussion of \S\ref{sec:femto}.
+Parameterize admissible fixed-endpoint paths by a finite vector $z$ with redundant
+coordinates removed, and define the accumulated phase
+\begin{equation}
+\Phi(z,\omega) = \frac{\omega}{c}\int_{\gamma_z} n_p(\xv,\omega)\,d\ell.
+\end{equation}
+A smooth physical branch satisfies $\nabla_z \Phi(z_\star(\omega),\omega) = 0$; assume
+the path Hessian $H = \Phi_{zz}$ is invertible. For the stationary-path phase
+$\phi(\omega) = \Phi(z_\star(\omega),\omega)$, group delay is $\phi'(\omega)$ and
+group-delay dispersion is $\phi''(\omega)$~\cite{bonnans2000}.
+
+\begin{theorem}[Dispersion sensitivity]\label{thm:dispersion}
+On the stationary branch,
+\begin{equation}
+\boxed{
+T_g = \phi'(\omega) = \Phi_\omega = \int_{\gamma_{z_\star}} \frac{n_g}{c}\,d\ell,
+\qquad
+\frac{dT_g}{d\omega} = \Phi_{\omega\omega} - \Phi_{\omega z} H^{-1} \Phi_{z\omega}.
+}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Differentiating stationarity: $H z_\star'(\omega) + \Phi_{z\omega} = 0$, so
+$z_\star' = -H^{-1}\Phi_{z\omega}$. The first derivative of the stationary-path phase is
+$\phi' = \Phi_\omega + \Phi_z z_\star' = \Phi_\omega$ because $\Phi_z = 0$ on the
+stationary branch. Differentiating once more and substituting $z_\star'$ proves the
+dispersion formula.
+\end{proof}
+
+The important asymmetry: path variation cancels from the \emph{first} phase derivative
+but returns in the \emph{second}. If $H$ has a small eigenvalue $\lambda$ with unit
+eigenvector $e$, the path contribution includes $-|e^\top \Phi_{z\omega}|^2/\lambda$,
+which can become large when frequency couples to a weakly constrained path deformation.
+The formula applies while the branch remains nondegenerate; at singularity, a different
+local treatment is needed. Assessing bandwidth using material dispersion alone can
+therefore miss sensitivity caused by frequency-dependent ray bending. For a smooth
+branch over $|\omega - \omega_0| \le h$, the mean-value theorem supplies the practical
+bound
+\begin{equation}
+\boxed{
+\left|T_g(\omega) - T_g(\omega_0)\right| \le
+h \sup_{\text{band}} \left|\Phi_{\omega\omega} - \Phi_{\omega z} H^{-1} \Phi_{z\omega}\right|,
+}
+\end{equation}
+and requiring this to stay below the timing tolerance gives a concrete criterion for
+when one frequency-specific calibration table is adequate and when the frequency
+partition of \S\ref{sec:femto} needs refinement.
+
+\subsection{What the extensions change in the design}
+
+\begin{itemize}[nosep]
+\item \textbf{Extension 1:} recirculating instruments need history variables (lap counter,
+launch identity, or accumulated delay) beyond the five-dimensional state.
+\item \textbf{Extension 2:} validation must test autocorrelation and spectra after branch
+correction, not only residual variance; clock-like spectra can be geometric artifacts.
+\item \textbf{Extension 3:} the benchmark budget must count branch identity exactly;
+$J$ branches cost $J^2$ in MSE relative to identity-discarding compression.
+\item \textbf{Extension 4:} refinement must clear the calibration threshold
+of Theorem~\ref{thm:threshold}; the paper's refinement rule should target
+post-calibration error, and constant-delay cells are strictly harmful.
+\item \textbf{Extension 5:} bandwidth assessment needs the inverse-Hessian dispersion
+sensitivity, not material dispersion alone.
+\end{itemize}
+
+\section{Limits and unproved obligations}\label{sec:limits}
+
+By Thursday afternoon, the prototype has produced: a reproducible optical model, a finite
+phase-space partition, a contiguous Ada memory arena, an explicit set of address
+invariants, and a test harness designed to send rays through a caustic. It knows the
+difference between two rays meeting at the same place; it knows that outer shells do not
+behave like inner shells; it knows that the phase index and the group index are not
+interchangeable; and it knows that a successful memory lookup is not proof of a
+successful physical measurement. It has not discovered a new fundamental clock, the SoC
+is not fabricated, and nobody has proved that nature contains a subtler clock beneath the
+atomic clock.
+
+Three things remain unsettled, and we state them as specific, testable claims rather than
+as failures:
+\begin{enumerate}[label=(\arabic*)]
+\item \textbf{Implementation verification scope.} The released Ada/SPARK
+specification is machine-checked by GNATprove (47/47 proof obligations discharged, 0
+unproved, for the released three-chart encoder instance and its contract structure;
+Appendix \ref{app:ada}), which closes Tier~1 for the released chart table. The chart
+table is a three-entry literal, so injectivity holds there by construction; the table
+consistency predicate is not used as any subprogram's precondition, the ghost
+\texttt{Global\_Rank} entry point is an unimplemented stub, and the exhaustive bijection
+test is executed rather than verified. This does not cover the geometry preprocessor,
+the interrupt-time chart-table update path, or arbitrary chart tables; those remain
+outside the transcript's scope and are stated as such.
+\item \textbf{Geometric preprocessing quality.} The quality of the geometric
+preprocessing---quantified cell coverage and approximation error near caustics and
+deformed boundaries---is a numerical question the four-day schedule does not close
+(Tier 2, \S\ref{sec:fourdays}).
+\item \textbf{Metrological benefit.} Whether this architecture improves a real
+femtosecond measurement over a simpler baseline is a scientific question no data
+structure can answer on its own (Tier 3).
+\end{enumerate}
+
+These are the criteria on which the prototype must eventually be judged. We close with
+the paper's conclusion, restated once more: the optimal representation is not the one
+that stores the fewest coordinates or minimizes a single timing error; it is the least
+expensive representation that preserves every distinction the instrument may need to
+make. The intern started with an array and ended with a constrained
+information-theoretic instrument-design problem.
+
+\section*{Acknowledgments}
+The tools obscura (a lightweight headless browser) and TinyFish CLI (web search and
+fetch) were used during the preparation of this manuscript for source retrieval and
+bibliographic verification.
+
+\appendix
+
+\section{Ada/SPARK specification and GNATprove transcript}\label{app:ada}
+
+\subsection{Specification (\texttt{chart\_encoder.ads})}
+
+\begin{verbatim}
+--  Chart-aware contiguous memory encoder for discretized optical phase space.
+--  Companion artifact to "Chart-Aware Contiguous Memory for Discretized Optical
+--  Phase Space" (Sethurathienam Iyer, 2026).
+--
+--  Design intent (paper Sections 7-8):
+--    * E(k, r) = B(k) + r   with consecutive intervals B(0) = 0,
+--      B(k+1) = B(k) + N(k).
+--    * Range bound        : every address produced is < Arena_Size.
+--    * Injectivity        : distinct (chart, rank) pairs yield distinct addresses
+--      (relational property, proved via ghost lemma in body).
+--    * Coverage/bijectivity follows from consecutiveness of the intervals.
+--
+--  The chart table below is the concrete table used in Experiment 4:
+--  (B0, N0) = (0, 512), (B1, N1) = (512, 256), (B2, N2) = (768, 256).
+
+package Chart_Encoder with SPARK_Mode is
+
+   Chart_Count : constant := 3;
+   Arena_Size  : constant := 1024;
+
+   type Chart_Id  is new Natural range 0 .. Chart_Count - 1;
+   type Rank      is new Natural range 0 .. Arena_Size - 1;
+   type Address   is new Natural range 0 .. Arena_Size - 1;
+
+   --  Chart table (immutable at acquisition time; versioned per batch).
+   Base     : constant array (Chart_Id) of Natural := (0, 512, 768);
+   Cells    : constant array (Chart_Id) of Natural := (512, 256, 256);
+
+   --  Contract on the raw table: intervals are consecutive and in bounds.
+   Table_Is_Consistent : constant Boolean :=
+     Base (0) = 0
+     and then (for all J in Chart_Id =>
+                 Base (J) + Cells (J) <= Arena_Size)
+     and then (for all J in Chart_Id'First .. Chart_Id'Last - 1 =>
+                 Base (Chart_Id'Succ (J)) = Base (J) + Cells (J));
+
+   --  Total number of cells across all charts.
+   Cell_Total : constant := 512 + 256 + 256;  --  = Arena_Size
+
+   type Valid_Rank is new Natural range 0 .. Cell_Total - 1;
+
+   --  The map from linear ranks within a chart to addresses is injective
+   --  globally: this predicate expresses that (K, R) corresponds to a
+   --  unique global rank, hence a unique address.
+   function Global_Rank (K : Chart_Id; R : Valid_Rank) return Natural with
+     Pre     => Natural (R) < Cells (K),
+     Global    => null,
+     Import,
+     Ghost;
+   --  Encoder: the ONLY address-producing primitive.
+   --  The rank must lie within the chart's own cell count; the range bound
+   --  then follows from the consecutive-interval table invariant.
+   function Encode (K : Chart_Id; R : Valid_Rank) return Address with
+     Pre  => Natural (R) < Cells (K)
+               and then Base (K) + Natural (R) < Arena_Size,
+     Post => Natural (Encode'Result) = Base (K) + Natural (R);
+
+   --  Decoder: reconstructs the canonical cell identity from an address.
+   --  Establishes Tier 1 representational correctness: round trip.
+   procedure Decode
+     (A : Address;
+      K : out Chart_Id;
+      R : out Valid_Rank) with
+     Post => Encode (K, R) = A;
+
+end Chart_Encoder;
+\end{verbatim}
+
+\noindent The body adds a ghost lemma \texttt{Injectivity\_Lemma(K1,R1,K2,R2)} whose
+precondition includes the pairwise-disjoint consecutive-interval table invariant and
+whose postcondition concludes $K_1=K_2 \wedge R_1=R_2$.
+
+\subsection{Transcript (GNATprove 14.1.1; cvc5, Alt-Ergo, Z3)}
+
+\begin{verbatim}
+Summary of SPARK analysis
+---------------------------------------------------------------------------------
+SPARK Analysis results        Total      Flow      Provers   Justified   Unproved
+---------------------------------------------------------------------------------
+Initialization                    2         2            .           .          .
+Run-time Checks                  29         .    29 (CVC5)           .          .
+Assertions                        9         .     9 (CVC5)           .          .
+Functional Contracts              6         .     6 (CVC5)           .          .
+Termination                       1         1            .           .          .
+---------------------------------------------------------------------------------
+Total                            47    3 (6%)     44 (94%)           .          .
+
+  Chart_Encoder          flow analyzed and proved (4 checks)
+  Chart_Encoder.Encode   flow analyzed and proved (13 checks)
+  Chart_Encoder.Decode   flow analyzed and proved (6 checks)
+  Chart_Encoder.Injectivity_Lemma  analyzed and proved (21 checks)
+\end{verbatim}
+
+\noindent The exhaustive runtime test (\texttt{test\_encoder.adb}) additionally
+enumerates all 1024 chart--rank pairs, confirms no duplicate addresses, checks that the
+union covers $[0,1024)$, and verifies the decode round trip. Both the specification and
+the transcript are released with the paper (\texttt{code/chart\_encoder.*},
+\texttt{code/gnatprove-transcript.txt}). Scope: the proof applies to this chart table
+and contract structure; it does not cover the geometry preprocessor or the
+interrupt-time update path (\S\ref{sec:limits}).
+
+\section{Contact geometry of the fixed-frequency manifold}\label{app:contact}
+
+
+
+The fixed-frequency optical manifold $\Mopt$ is a regular hypersurface in the cotangent
+bundle of three-dimensional space. The ambient cotangent bundle has a canonical
+one-form $\lambda = \pv \cdot d\xv$; restrict it to the hypersurface,
+$\alpha = \lambda|_{\Mopt}$. For a smooth positive isotropic refractive index, this
+defines a \emph{contact form}~\cite{geiges2008}: its kernel is a maximally non-integrable
+four-dimensional
+plane field on the five-dimensional manifold. The associated Reeb vector field is
+tangent to the optical characteristic flow, its trajectories coinciding with the
+phase-generated ray trajectories up to reparameterization. The full six-dimensional
+phase space is symplectic, while its fixed-frequency optical hypersurface carries a
+natural contact structure; the relationship can be understood through symplectization,
+the positive radial extension of the contact hypersurface.
+
+This explains why five dimensions arise so naturally: they are not merely the result of
+deleting one momentum coordinate from a six-dimensional array; they are the dimension of
+a contact manifold whose distinguished flow describes optical rays. None of this is
+necessary for the four-day prototype. It suggests a deeper research direction---whether
+a discrete optical state representation can preserve useful contact-geometric invariants
+with controlled approximation error---which is far more ambitious than whether an Ada
+array can store five indices. It also explains why chart-aware addressing is
+geometrically natural, even though contact geometry alone does not prescribe a unique or
+optimal memory layout.
+
+
+\section{Phase 2: closed rays, a dynamical zeta, and an obstruction}\label{app:phase2}
+
+Appendix~\ref{app:contact} put a contact form $\alpha = \pv\cdot d\xv$ on the
+five-dimensional fixed-frequency manifold, with the Reeb flow recovering the optical
+characteristic flow up to reparameterization. Section~\ref{sec:extensions} proved the
+closed-ray obstruction (Theorem~\ref{thm:closedray}). This appendix takes the obvious
+next step and asks what the \emph{global} closed-ray structure is, in the standard
+dynamical-systems sense. It is explicitly speculative: nothing here is required for the
+four-day prototype, and the section's purpose is to mark the boundary between what the
+geometry already gives and what it does not.
+
+\paragraph{Periods as invariants.} Let $\mathcal{P}$ be the set of primitive closed
+Reeb orbits, i.e.\ closed optical rays traversed once. Along $\gamma \in \mathcal{P}$
+the Reeb condition $\alpha(R_\alpha) = 1$ identifies Reeb time with the contact action,
+\begin{equation}
+T^{(p)}_\gamma = \oint_\gamma \alpha
+= \oint_\gamma \frac{n_p(\xv,\omega_0)}{c}\,d\ell ,
+\end{equation}
+which is the phase travel time, and the group-delay observable supplies a second
+invariant on the same orbits,
+$G_\gamma = \oint_\gamma (n_g/c)\,d\ell$. These are not independent data. With the
+positive dispersion ratio $r = n_g/n_p$,
+\begin{equation}
+G_\gamma = \int_0^{T^{(p)}_\gamma} r\!\left(\phi^t q\right) dt ,
+\end{equation}
+so group delay is a \emph{positive time change} of the phase period: the group-delay
+spectrum is the phase spectrum pushed through $r$, not a fresh object
+[evidence type A].
+
+Theorem~\ref{thm:closedray} then reads as a statement about repetition. After $m$
+circuits, $q_m = q_0$ while $T_g(m) - T_g(0) = m\,G_\gamma$. The instantaneous
+five-dimensional state cannot distinguish $m=1$ from $m=2$, because both are the same
+point; the missing history variable \emph{is} the repetition index of a periodic orbit.
+That is precisely the primitive-orbit/repetition decomposition that dynamical zeta
+functions exist to encode.
+
+\paragraph{A dynamical zeta function.} For a reference time $T_*$, define
+\begin{equation}
+\zeta_{\mathrm{opt}}(s) = \prod_{\gamma\in\mathcal{P}}
+\left(1 - e^{-sG_\gamma/T_*}\right)^{-1},
+\qquad
+-\frac{\zeta_{\mathrm{opt}}'(s)}{\zeta_{\mathrm{opt}}(s)}
+= \sum_{\gamma\in\mathcal{P}}\sum_{m\ge1}\frac{\log N_\gamma}{N_\gamma^{ms}},
+\end{equation}
+with orbit norm $N_\gamma = \exp(G_\gamma/T_*)$. The Euler product, the repetition
+index $m$, and the log-weights therefore assemble themselves exactly as in the Riemann
+Euler product. This is why trace formulas resemble the explicit formula, and it is also
+why the resemblance is not by itself evidence of anything: every zeta function has an
+Euler product over primitive objects with a repetition index. The periodic-orbit measure
+$\Theta_{\mathrm{opt}}(t) = \sum_{\gamma}\sum_{m\ge1}G_\gamma\,\delta(t-mG_\gamma)$ has
+Laplace transform $-\zeta_{\mathrm{opt}}'/\zeta_{\mathrm{opt}}$, so the zeta is a
+packaging of closed-ray delays rather than an extra assumption.
+
+\paragraph{An obstruction.} The cheapest attempt at an arithmetic construction fails,
+and this is the one provable result of this appendix. Replace the medium by a finite
+optical graph with $E$ edges of fixed optical lengths $\ell_1,\dots,\ell_E$. Each closed
+orbit traverses edge $i$ a non-negative integer number of times, so its period lies in
+the finite-rank additive module $\Lambda = \mathbb{Z}\ell_1 + \cdots + \mathbb{Z}\ell_E$.
+But the prime logarithms are linearly independent over $\mathbb{Q}$: if
+$\sum_j q_j\log p_j = 0$, clearing denominators gives $\sum_j m_j\log p_j = 0$ with
+$m_j\in\mathbb{Z}$, and exponentiating gives $\prod_j p_j^{m_j} = 1$, so unique
+factorization forces every $m_j = 0$. Hence
+$\dim_{\mathbb{Q}}\operatorname{span}\{\log p\} = \infty$, and a rank-$E$ module cannot
+contain it.
+
+\begin{theorem}[Finite-graph obstruction]\label{thm:finitegraph}
+No finite optical graph with additive edge-length weights realizes $C\log p$ as orbit
+periods for all primes. Any exact construction must leave the finite-metric-graph,
+additive-travel-time regime. [evidence type A]
+\end{theorem}
+
+The escape routes are an infinite graph, a non-additive or state-dependent weight, or an
+operator whose spectrum encodes arithmetic without the classical lengths literally being
+$\log p$. We note that Hilbert--P\'olya never required anyone to build racetracks of
+length $\log p$; the earlier possibility of an explicit optical construction of the
+primes is closed, not the operator route.
+
+\paragraph{What survives: counting, not equality.} A weaker target does survive, and a
+toy computation shows both why it looks impressive and why it is not. A bouquet of three
+loops $a,b,c$ with lengths $\ell_a,\ell_b,\ell_c$ generates primitive orbits as
+primitive cyclic words, with periods forced to be
+$L(w) = n_a\ell_a + n_b\ell_b + n_c\ell_c$; no prime is supplied to the model. Fitting
+the three lengths to $\log p_1,\dots,\log p_N$ (enumerating primitive necklaces to
+word-length 11, 25{,}486 orbits) reproduces:
+\begin{center}
+\begin{tabular}{rrrrr}
+\toprule
+$N$ & fitted $(\ell_a,\ell_b,\ell_c)$ & RMS rel.\ error & worst & entropy $h$ \\
+\midrule
+20 & $(0.7229,\,1.1274,\,1.6602)$ & $2.13\%$ & $4.92\%$ & $0.99937$ \\
+30 & $(0.7190,\,1.1279,\,1.6672)$ & $1.80\%$ & $5.09\%$ & $0.99972$ \\
+50 & $(0.7185,\,1.1309,\,1.6672)$ & $1.49\%$ & $4.96\%$ & $0.99903$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+For a suspension on a three-loop bouquet the topological entropy solves
+$e^{-h\ell_a}+e^{-h\ell_b}+e^{-h\ell_c}=1$, and the fitted lengths land at
+$h \approx 0.999$. This has been read as an independent discovery that the system
+self-organises to the entropy required by the prime number theorem under logarithmic
+coordinates. It is not.
+
+\begin{proposition}[$h=1$ is forced by the objective]\label{prop:hforced}
+Suppose a hyperbolic flow satisfies $\pi_{\mathrm{orb}}(T) \sim e^{hT}/(hT)$ and its
+primitive periods satisfy $L_n \sim \log p_n$. Then $h = 1$. [evidence type A]
+\end{proposition}
+\begin{proof}
+Evaluate the counting function at $T=\log p_n$. Its left side is $n$; its right side is
+$e^{h\log p_n}/(h\log p_n) = p_n^{h}/(h\log p_n)$. Since $n \sim p_n/\log p_n$, agreement
+requires $p_n^{h}/h \sim p_n$, i.e.\ $p_n^{h-1}\sim h$, which forces $h=1$.
+\end{proof}
+
+So the optimiser was handed the answer: matching $L_n$ to $\log p_n$ forces the counting
+law to agree asymptotically, and the counting law is what pins $h$. The $0.1\%$
+departure from unity is the finite window and the fitting residual, not signal. The
+methodological point is the useful one: leading-order agreement is automatic and
+therefore worthless as evidence, so any advance in this direction has to live in the
+fluctuation term.
+
+\paragraph{Where the zeros would have to be.} That fluctuation term is the only version
+of this programme with a chance of being interesting. Normalising $h=1$, one would have
+to match
+\begin{equation}
+\Delta_{\mathrm{opt}}(T) = \pi_{\mathrm{orb}}(T) - \operatorname{Li}(e^T)
+\quad\text{to}\quad
+\Delta_{\mathrm{prime}}(T) = \pi(e^T) - \operatorname{Li}(e^T),
+\end{equation}
+not the growth rate but the error. Each orbit would additionally need its linearized
+Poincar\'e return map $P_\gamma$ on the four-dimensional contact plane $\ker\alpha$, and
+a Maslov-type index---the data a Gutzwiller-type trace formula consumes. None of that is
+constructed here.
+
+\paragraph{Net position.} What this appendix establishes is narrow and firm. The
+closed-ray obstruction of \S\ref{sec:extensions} is a periodic-orbit statement wearing a
+memory-layout costume; the dynamical zeta function is a natural and harmless packaging of
+closed-ray delays; the finite-graph route to arithmetic is provably closed; and
+leading-order agreement with the prime-log counting law is automatic. The programme is
+not refuted, but its easy version is, and the remaining version is a fluctuation problem
+whose entire content is the error term.
+
+\section*{Data and code availability}
+The released artifacts accompany this manuscript: the synthetic ray generator and
+deterministic split rule (\texttt{code/generate.py}), the uniform and chart-legal DP
+partition code with 30-seed evaluation (\texttt{code/partition.py}), the per-seed
+results (\texttt{code/results\_exp5\_seeds.csv}), the budget-scaling, control, analytic-partition
+and chart-legality analysis behind Tables in \S\ref{sec:experiments}
+(\texttt{code/scaling.py}, \texttt{code/results\_exp5\_scaling.csv}), the Ada/SPARK encoder with its
+exhaustive runtime test (\texttt{code/chart\_encoder.*}, \texttt{code/test\_encoder.adb}),
+and the GNATprove transcript (\texttt{code/gnatprove-transcript.txt}). The two
+calibration constants of the reference generator are documented in its source; the
+chart table is the immutable table of Experiment~4. An independent audit of these
+artifacts, including the corrections it prompted, is released as
+\texttt{code/AUDIT.md}.
+
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+
+\end{document}
